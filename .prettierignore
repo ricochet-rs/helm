@@ -1,0 +1,7 @@
+Chart.lock
+node_modules/
+pnpm-lock.yaml
+.pnpm-store/
+tmpcharts-*/
+# won't work
+charts/ricochet/templates/**/*.yaml
