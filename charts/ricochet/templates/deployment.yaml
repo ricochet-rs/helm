@@ -1,0 +1,150 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ricochet.fullname" . }}
+  labels:
+    {{- include "ricochet.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+    {{- if eq .Values.strategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable }}
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ricochet.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "ricochet.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ricochet.serviceAccountName" . }}
+      {{- if .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- end }}
+      {{- if or .Values.initContainers .Values.persistence.home.enabled }}
+      initContainers:
+        {{- if .Values.persistence.home.enabled }}
+        - name: fix-permissions
+          image: busybox:1.36
+          command: ['sh', '-c']
+          args:
+            - |
+              mkdir -p {{ .Values.persistence.home.mountPath }}/content
+              chown -R 1000:1000 {{ .Values.persistence.home.mountPath }}
+              {{- if .Values.persistence.cache.enabled }}
+              chown -R 1000:1000 {{ .Values.persistence.cache.mountPath }} || true
+              {{- end }}
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+          volumeMounts:
+            {{- if .Values.persistence.cache.enabled }}
+            - name: cache-storage
+              mountPath: {{ .Values.persistence.cache.mountPath }}
+            {{- end }}
+            {{- if .Values.persistence.home.enabled }}
+            - name: home-storage
+              mountPath: {{ .Values.persistence.home.mountPath }}
+            {{- end }}
+        {{- end }}
+        {{- with .Values.initContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- if .Values.securityContext }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- end }}
+          image: {{ include "ricochet.image" . }}
+          imagePullPolicy: {{ include "ricochet.imagePullPolicy" . }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: {{ .Values.service.protocol }}
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.persistence.cache.enabled }}
+            - name: cache-storage
+              mountPath: {{ .Values.persistence.cache.mountPath }}
+            {{- end }}
+            {{- if .Values.persistence.home.enabled }}
+            - name: home-storage
+              mountPath: {{ .Values.persistence.home.mountPath }}
+            {{- end }}
+            {{- if .Values.configMap.enabled }}
+            - name: config-file
+              mountPath: /opt/ricochet/config/ricochet-config.toml
+              subPath: ricochet-config.toml
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- with .Values.sidecarContainers }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.persistence.cache.enabled }}
+        - name: cache-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.cache.existingClaim | default (printf "%s-cache" (include "ricochet.fullname" .)) }}
+        {{- end }}
+        {{- if .Values.persistence.home.enabled }}
+        - name: home-storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.home.existingClaim | default (printf "%s-home" (include "ricochet.fullname" .)) }}
+        {{- end }}
+        {{- if .Values.configMap.enabled }}
+        - name: config-file
+          configMap:
+            name: {{ include "ricochet.fullname" . }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

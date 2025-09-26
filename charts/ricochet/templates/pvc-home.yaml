@@ -1,0 +1,26 @@
+{{- if and .Values.persistence.home.enabled (not .Values.persistence.home.existingClaim) -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ricochet.fullname" . }}-home
+  labels:
+    {{- include "ricochet.labels" . | nindent 4 }}
+    app.kubernetes.io/component: home
+  {{- with .Values.persistence.home.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.home.accessMode }}
+  {{- if .Values.persistence.home.storageClass }}
+  {{- if (eq "-" .Values.persistence.home.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.persistence.home.storageClass }}
+  {{- end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.home.size }}
+{{- end }}

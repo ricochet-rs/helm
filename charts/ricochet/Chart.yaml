@@ -1,0 +1,16 @@
+apiVersion: v2
+name: ricochet
+description: A Helm chart for deploying Ricochet server - a Rust application
+type: application
+version: 0.1.0
+appVersion: latest
+icon: https://ricochet.rs/logo.png
+keywords:
+  - ricochet
+  - rust
+  - server
+sources:
+  - https://github.com/ricochet/ricochet
+maintainers:
+  - name: Ricochet Team
+    email: support@ricochet.rs

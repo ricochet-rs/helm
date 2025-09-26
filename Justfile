@@ -27,3 +27,6 @@ lint:
     just lint-yaml
     just lint-editorconfig
     just lint-prettier
+
+test:
+    helm unittest charts/ricochet

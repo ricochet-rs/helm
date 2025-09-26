@@ -1,0 +1,309 @@
+# fullnameOverride -- The full name of the release (can be overridden)
+fullnameOverride: ''
+
+# nameOverride -- The name of the release (can be overridden)
+nameOverride: ''
+
+# clusterDomain -- Kubernetes cluster domain
+clusterDomain: cluster.local
+
+# replicaCount -- Number of replicas to deploy
+replicaCount: 1
+
+# strategy -- Deployment strategy configuration
+strategy:
+  # strategy.type -- Deployment strategy type (RollingUpdate or Recreate)
+  type: RollingUpdate
+  rollingUpdate:
+    # strategy.rollingUpdate.maxSurge -- Maximum number of pods that can be created over the desired number of pods
+    maxSurge: 1
+    # strategy.rollingUpdate.maxUnavailable -- Maximum number of pods that can be unavailable during the update process
+    maxUnavailable: 0
+
+# env -- List of environment variables to set in the container
+env: []
+# - name: EXAMPLE_VAR
+#   value: "example-value"
+
+# envFrom -- Set envFrom to use env vars from ConfigMaps or Secrets
+envFrom: []
+# - secretRef:
+#     name: mysecret
+# - configMapRef:
+#     name: myconfig
+
+image:
+  # image.registry -- Docker registry for the image
+  registry: reg.ricochet.rs
+  # image.repository -- Repository for the image
+  repository: ricochet/ricochet-server
+  # image.tag -- Tag for the image (defaults to chart appVersion)
+  tag: 'dev-alpine'
+  # image.pullPolicy -- Image pull policy
+  pullPolicy: IfNotPresent
+
+# imagePullSecrets -- List of image pull secrets
+imagePullSecrets: []
+# - name: myregistrykey
+
+service:
+  # service.type -- Service type
+  type: ClusterIP
+  # service.port -- Service port
+  port: 6188
+  # service.targetPort -- Container port
+  targetPort: 6188
+  # service.protocol -- Protocol for the service
+  protocol: TCP
+  # service.annotations -- Annotations for the service
+  annotations: {}
+  # service.labels -- Additional labels for the service
+  labels: {}
+
+ingress:
+  # ingress.enabled -- Enable ingress resource
+  enabled: false
+  # ingress.className -- Ingress class name
+  className: ''
+  # ingress.annotations -- Annotations for ingress resource
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  # ingress.hosts -- List of hosts for the ingress resource
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: Prefix
+  # ingress.tls -- TLS configuration for the ingress
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+# Gateway API configuration (alternative to Ingress)
+gatewayApi:
+  # gatewayApi.enabled -- Enable Gateway API resources (HTTPRoute)
+  enabled: false
+  # gatewayApi.gateway -- Reference to the Gateway to use
+  gateway:
+    # gatewayApi.gateway.name -- Name of the Gateway
+    name: ''
+    # gatewayApi.gateway.namespace -- Namespace of the Gateway (defaults to release namespace)
+    namespace: ''
+  # gatewayApi.hostnames -- List of hostnames for the HTTPRoute
+  hostnames:
+    - chart-example.local
+  # gatewayApi.rules -- HTTP routing rules
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+  # gatewayApi.annotations -- Annotations for the HTTPRoute resource
+  annotations: {}
+  # gatewayApi.labels -- Additional labels for the HTTPRoute resource
+  labels: {}
+
+resources:
+  # resources.limits -- Resource limits for the container
+  limits: {}
+    # cpu: 1000m
+    # memory: 1Gi
+  # resources.requests -- Resource requests for the container
+  requests: {}
+    # cpu: 100m
+    # memory: 128Mi
+
+# nodeSelector -- Node selector for pod assignment
+nodeSelector: {}
+
+# tolerations -- Tolerations for pod assignment
+tolerations: []
+
+# affinity -- Affinity rules for pod assignment
+affinity: {}
+
+# podAnnotations -- Annotations for pods
+podAnnotations: {}
+
+# podLabels -- Additional labels for pods
+podLabels: {}
+
+# podSecurityContext -- Security context for pods
+podSecurityContext: {}
+  # fsGroup: 1000
+  # runAsNonRoot: true
+  # runAsUser: 1000
+  # runAsGroup: 1000
+
+# securityContext -- Security context for containers
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #     - ALL
+  # readOnlyRootFilesystem: false
+  # allowPrivilegeEscalation: false
+  # runAsNonRoot: true
+  # runAsUser: 1000
+  # runAsGroup: 1000
+
+# livenessProbe -- Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+# readinessProbe -- Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+# persistence -- Persistence configuration for multiple volumes
+persistence:
+  cache:
+    # persistence.cache.enabled -- Enable persistent volume for cache
+    enabled: false
+    # persistence.cache.storageClass -- Storage class for the cache PVC (use '-' for default)
+    storageClass: ''
+    # persistence.cache.accessMode -- Access mode for the cache PVC
+    accessMode: ReadWriteOnce
+    # persistence.cache.size -- Size of the cache PVC
+    size: 10Gi
+    # persistence.cache.mountPath -- Mount path for the cache volume
+    mountPath: /opt/ricochet/renv/cache
+    # persistence.cache.annotations -- Annotations for the cache PVC
+    annotations: {}
+    # persistence.cache.existingClaim -- Use an existing PVC for cache
+    existingClaim: ''
+  home:
+    # persistence.home.enabled -- Enable persistent volume for home
+    enabled: false
+    # persistence.home.storageClass -- Storage class for the home PVC (use '-' for default)
+    storageClass: ''
+    # persistence.home.accessMode -- Access mode for the home PVC
+    accessMode: ReadWriteOnce
+    # persistence.home.size -- Size of the home PVC
+    size: 25Gi
+    # persistence.home.mountPath -- Mount path for the home volume
+    mountPath: /opt/ricochet/data
+    # persistence.home.annotations -- Annotations for the home PVC
+    annotations: {}
+    # persistence.home.existingClaim -- Use an existing PVC for home
+    existingClaim: ''
+
+# serviceAccount -- Service account configuration
+serviceAccount:
+  # serviceAccount.create -- Create a service account
+  create: true
+  # serviceAccount.annotations -- Annotations for the service account
+  annotations: {}
+  # serviceAccount.name -- Name of the service account (generated if not set)
+  name: ''
+
+# rbac -- RBAC configuration
+rbac:
+  # rbac.create -- Create RBAC resources
+  create: false
+  # rbac.rules -- Custom RBAC rules
+  rules: []
+
+# configMap -- ConfigMap configuration for application settings
+configMap:
+  # configMap.enabled -- Enable ConfigMap creation
+  enabled: false
+  # configMap.data -- Data to include in the ConfigMap
+  data:
+    ricochet-config.toml: |
+      # Ricochet configuration file
+      # Add your configuration here
+
+# secret -- Secret configuration for sensitive data
+secret:
+  # secret.enabled -- Enable Secret creation
+  enabled: false
+  # secret.data -- Data to include in the Secret (will be base64 encoded)
+  data: {}
+    # api-key: mysecretkey
+
+# extraVolumes -- Additional volumes
+extraVolumes: []
+# - name: extra-volume
+#   configMap:
+#     name: extra-configmap
+
+# extraVolumeMounts -- Additional volume mounts
+extraVolumeMounts: []
+# - name: extra-volume
+#   mountPath: /etc/extra
+#   readOnly: true
+
+# initContainers -- Additional init containers
+initContainers: []
+
+# sidecarContainers -- Sidecar containers
+sidecarContainers: []
+
+# networkPolicy -- Network policy configuration
+networkPolicy:
+  # networkPolicy.enabled -- Enable NetworkPolicy
+  enabled: false
+  # networkPolicy.ingress -- Ingress rules
+  ingress:
+    - from:
+        # Allow traffic from all pods in the same namespace
+        - podSelector:
+            matchLabels: {}
+        # Allow traffic from ingress-nginx namespace
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        # Alternative label for ingress-nginx namespace
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        # Allow traffic from gateway-system namespace
+        - namespaceSelector:
+            matchLabels:
+              name: gateway-system
+        # Alternative label for gateway-system namespace  
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: gateway-system
+        # Allow traffic from any namespace with ingress controller
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 6188
+  # networkPolicy.egress -- Egress rules
+  egress:
+    - to:
+        - podSelector:
+            matchLabels: {}
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    - to:
+        - podSelector:
+            matchLabels: {}
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80

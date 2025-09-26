@@ -1,0 +1,29 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+## Installation
+
+```sh
+helm install ricochet oci://ghcr.io/ricochet-rs/helm
+```
+
+Has not been tested actively, so use with caution!
+
+{{- define "chart.valuesTable" }}
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+  {{- range .Values }}
+    {{- "\n| "}}{{ .Key | replace "." ".&ZeroWidthSpace;" }}
+    {{- " | "}}{{ .Type }}
+    {{- " | "}}{{ (default .Default .AutoDefault) | replace "," ",`<br>`" }}
+    {{- " | "}}{{ default .Description .AutoDescription }}
+    {{- " | "}}
+  {{- end }}
+{{- end }}
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}

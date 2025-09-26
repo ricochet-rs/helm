@@ -1,0 +1,188 @@
+suite: gateway api
+templates:
+  - httproute.yaml
+tests:
+  - it: should not create HTTPRoute when disabled
+    set:
+      gatewayApi.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create HTTPRoute when enabled
+    set:
+      gatewayApi.enabled: true
+      gatewayApi.gateway.name: my-gateway
+      gatewayApi.hostnames:
+        - test.example.com
+      gatewayApi.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - isKind:
+          of: HTTPRoute
+      - equal:
+          path: apiVersion
+          value: gateway.networking.k8s.io/v1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-ricochet
+      - equal:
+          path: spec.parentRefs[0].name
+          value: my-gateway
+
+  - it: should set gateway namespace when specified
+    set:
+      gatewayApi.enabled: true
+      gatewayApi.gateway.name: my-gateway
+      gatewayApi.gateway.namespace: gateway-system
+      gatewayApi.hostnames:
+        - test.example.com
+      gatewayApi.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - equal:
+          path: spec.parentRefs[0].namespace
+          value: gateway-system
+
+  - it: should set hostnames correctly
+    set:
+      gatewayApi.enabled: true
+      gatewayApi.gateway.name: my-gateway
+      gatewayApi.hostnames:
+        - app.example.com
+        - www.example.com
+      gatewayApi.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - equal:
+          path: spec.hostnames[0]
+          value: app.example.com
+      - equal:
+          path: spec.hostnames[1]
+          value: www.example.com
+
+  - it: should configure path matching rules
+    set:
+      gatewayApi.enabled: true
+      gatewayApi.gateway.name: my-gateway
+      gatewayApi.hostnames:
+        - test.example.com
+      gatewayApi.rules:
+        - matches:
+            - path:
+                type: Exact
+                value: /api
+            - path:
+                type: PathPrefix
+                value: /v1
+    asserts:
+      - equal:
+          path: spec.rules[0].matches[0].path.type
+          value: Exact
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /api
+      - equal:
+          path: spec.rules[0].matches[1].path.type
+          value: PathPrefix
+      - equal:
+          path: spec.rules[0].matches[1].path.value
+          value: /v1
+
+  - it: should configure backend service correctly
+    set:
+      gatewayApi.enabled: true
+      gatewayApi.gateway.name: my-gateway
+      service.port: 6188
+      gatewayApi.hostnames:
+        - test.example.com
+      gatewayApi.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: RELEASE-NAME-ricochet
+      - equal:
+          path: spec.rules[0].backendRefs[0].port
+          value: 6188
+
+  - it: should add annotations when specified
+    set:
+      gatewayApi.enabled: true
+      gatewayApi.gateway.name: my-gateway
+      gatewayApi.annotations:
+        gateway.example.com/timeout: '30s'
+        gateway.example.com/retry: '3'
+      gatewayApi.hostnames:
+        - test.example.com
+      gatewayApi.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - equal:
+          path: metadata.annotations["gateway.example.com/timeout"]
+          value: '30s'
+      - equal:
+          path: metadata.annotations["gateway.example.com/retry"]
+          value: '3'
+
+  - it: should add labels when specified
+    set:
+      gatewayApi.enabled: true
+      gatewayApi.gateway.name: my-gateway
+      gatewayApi.labels:
+        environment: production
+        team: backend
+      gatewayApi.hostnames:
+        - test.example.com
+      gatewayApi.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+    asserts:
+      - equal:
+          path: metadata.labels.environment
+          value: production
+      - equal:
+          path: metadata.labels.team
+          value: backend
+
+  - it: should support filters in rules
+    set:
+      gatewayApi.enabled: true
+      gatewayApi.gateway.name: my-gateway
+      gatewayApi.hostnames:
+        - test.example.com
+      gatewayApi.rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /
+          filters:
+            - type: RequestHeaderModifier
+              requestHeaderModifier:
+                add:
+                  - name: X-Custom-Header
+                    value: custom-value
+    asserts:
+      - equal:
+          path: spec.rules[0].filters[0].type
+          value: RequestHeaderModifier
+      - equal:
+          path: spec.rules[0].filters[0].requestHeaderModifier.add[0].name
+          value: X-Custom-Header

@@ -1,0 +1,101 @@
+suite: ingress
+templates:
+  - ingress.yaml
+tests:
+  - it: should not create ingress when disabled
+    set:
+      ingress.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create ingress when enabled
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: test.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-ricochet
+      - equal:
+          path: spec.rules[0].host
+          value: test.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+
+  - it: should set ingress class when specified
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      ingress.hosts:
+        - host: test.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+
+  - it: should add TLS configuration when specified
+    set:
+      ingress.enabled: true
+      ingress.hosts:
+        - host: test.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+      ingress.tls:
+        - secretName: test-tls
+          hosts:
+            - test.example.com
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: test-tls
+      - equal:
+          path: spec.tls[0].hosts[0]
+          value: test.example.com
+
+  - it: should add annotations when specified
+    set:
+      ingress.enabled: true
+      ingress.annotations:
+        cert-manager.io/cluster-issuer: letsencrypt
+        nginx.ingress.kubernetes.io/rewrite-target: /
+      ingress.hosts:
+        - host: test.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: letsencrypt
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: /
+
+  - it: should use correct service port
+    set:
+      ingress.enabled: true
+      service.port: 6188
+      ingress.hosts:
+        - host: test.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 6188
