@@ -19,6 +19,12 @@ spec:
   template:
     metadata:
       annotations:
+        {{- if ne (len .Values.config) 0 }}
+        checksum/config: {{ toYaml .Values.config | sha256sum }}
+        {{- end }}
+        {{- if .Values.config.secrets }}
+        checksum/secret-config: {{ toYaml .Values.config.secrets | sha256sum }}
+        {{- end }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -37,7 +43,7 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- end }}
-      {{- if or .Values.initContainers .Values.persistence.home.enabled }}
+      {{- if or .Values.initContainers .Values.persistence.home.enabled (ne (len .Values.config) 0) }}
       initContainers:
         {{- if .Values.persistence.home.enabled }}
         - name: fix-permissions
@@ -61,6 +67,91 @@ spec:
             {{- if .Values.persistence.home.enabled }}
             - name: home-storage
               mountPath: {{ .Values.persistence.home.mountPath }}
+            {{- end }}
+        {{- end }}
+        {{- if ne (len .Values.config) 0 }}
+        - name: merge-config
+          image: busybox:1.36
+          command: ['sh', '-c']
+          args:
+            - |
+              # Create config directory
+              mkdir -p /opt/ricochet/data
+
+              # Start with base config
+              if [ -f /config/ricochet-config.toml ]; then
+                cp /config/ricochet-config.toml /opt/ricochet/data/ricochet-config.toml
+              else
+                touch /opt/ricochet/data/ricochet-config.toml
+              fi
+
+              {{- if .Values.config.secrets }}
+              # Process secret references
+              {{- range $section, $secretRefs := .Values.config.secrets }}
+              {{- range $key, $ref := $secretRefs }}
+              {{- if kindOf $ref | eq "map" }}
+              {{- if $ref.secretName }}
+
+              # Fetch secret value for {{ $section }}.{{ $key }}
+              SECRET_VALUE=$(cat /secrets/{{ $ref.secretName }}/{{ $ref.key | default $key }} 2>/dev/null || echo "")
+              if [ -n "$SECRET_VALUE" ]; then
+                # Append to config if not already present
+                if ! grep -q "^\[{{ $section }}\]" /opt/ricochet/data/ricochet-config.toml; then
+                  echo "" >> /opt/ricochet/data/ricochet-config.toml
+                  echo "[{{ $section }}]" >> /opt/ricochet/data/ricochet-config.toml
+                fi
+                echo '{{ $key }} = "'$SECRET_VALUE'"' >> /opt/ricochet/data/ricochet-config.toml
+              fi
+              {{- end }}
+              {{- else }}
+              # Simple secret reference for {{ $section }}.{{ $key }}
+              SECRET_VALUE=$(cat /secrets/{{ $ref }}/{{ $key }} 2>/dev/null || echo "")
+              if [ -n "$SECRET_VALUE" ]; then
+                if ! grep -q "^\[{{ $section }}\]" /opt/ricochet/data/ricochet-config.toml; then
+                  echo "" >> /opt/ricochet/data/ricochet-config.toml
+                  echo "[{{ $section }}]" >> /opt/ricochet/data/ricochet-config.toml
+                fi
+                echo '{{ $key }} = "'$SECRET_VALUE'"' >> /opt/ricochet/data/ricochet-config.toml
+              fi
+              {{- end }}
+              {{- end }}
+              {{- end }}
+              {{- end }}
+
+              # Set proper permissions
+              chown -R 1000:1000 /opt/ricochet/data
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+          volumeMounts:
+            {{- if ne (len .Values.config) 0 }}
+            - name: config
+              mountPath: /config
+            {{- end }}
+            {{- if .Values.config.secrets }}
+            {{- $uniqueSecrets := dict }}
+            {{- range $section, $secretRefs := .Values.config.secrets }}
+            {{- range $key, $ref := $secretRefs }}
+            {{- if kindOf $ref | eq "map" }}
+            {{- if $ref.secretName }}
+            {{- $_ := set $uniqueSecrets $ref.secretName true }}
+            {{- end }}
+            {{- else }}
+            {{- $_ := set $uniqueSecrets $ref true }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- range $secretName, $_ := $uniqueSecrets }}
+            - name: secret-{{ $secretName }}
+              mountPath: /secrets/{{ $secretName }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.persistence.home.enabled }}
+            - name: home-storage
+              mountPath: {{ .Values.persistence.home.mountPath }}
+            {{- else }}
+            - name: config-merged
+              mountPath: /opt/ricochet/data
             {{- end }}
         {{- end }}
         {{- with .Values.initContainers }}
@@ -105,12 +196,11 @@ spec:
             {{- if .Values.persistence.home.enabled }}
             - name: home-storage
               mountPath: {{ .Values.persistence.home.mountPath }}
+            {{- else if ne (len .Values.config) 0 }}
+            - name: config-merged
+              mountPath: /opt/ricochet/data
             {{- end }}
-            {{- if .Values.configMap.enabled }}
-            - name: config-file
-              mountPath: /opt/ricochet/config/ricochet-config.toml
-              subPath: ricochet-config.toml
-            {{- end }}
+
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -128,10 +218,33 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.home.existingClaim | default (printf "%s-home" (include "ricochet.fullname" .)) }}
         {{- end }}
-        {{- if .Values.configMap.enabled }}
-        - name: config-file
+        {{- if ne (len .Values.config) 0 }}
+        - name: config
           configMap:
-            name: {{ include "ricochet.fullname" . }}
+            name: {{ .Values.existingConfigMap | default (printf "%s-config" (include "ricochet.fullname" .)) }}
+        {{- end }}
+        {{- if .Values.config.secrets }}
+        {{- $uniqueSecrets := dict }}
+        {{- range $section, $secretRefs := .Values.config.secrets }}
+        {{- range $key, $ref := $secretRefs }}
+        {{- if kindOf $ref | eq "map" }}
+        {{- if $ref.secretName }}
+        {{- $_ := set $uniqueSecrets $ref.secretName true }}
+        {{- end }}
+        {{- else }}
+        {{- $_ := set $uniqueSecrets $ref true }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- range $secretName, $_ := $uniqueSecrets }}
+        - name: secret-{{ $secretName }}
+          secret:
+            secretName: {{ $secretName }}
+        {{- end }}
+        {{- end }}
+        {{- if and (ne (len .Values.config) 0) (not .Values.persistence.home.enabled) }}
+        - name: config-merged
+          emptyDir: {}
         {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}

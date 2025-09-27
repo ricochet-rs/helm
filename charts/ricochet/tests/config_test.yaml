@@ -1,0 +1,171 @@
+suite: config mapping tests
+templates:
+  - configmap-config.yaml
+  - deployment.yaml
+tests:
+  # Test 1: ConfigMap is not created when config is empty
+  - it: should not create ConfigMap when config is empty
+    set:
+      config: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: configmap-config.yaml
+
+  # Test 2: ConfigMap is created with basic config
+  - it: should create ConfigMap with basic server config
+    set:
+      config:
+        server:
+          host: "0.0.0.0"
+          port: 6188
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: configmap-config.yaml
+      - isKind:
+          of: ConfigMap
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[server\]'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'host = "0.0.0.0"'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'port = 6188'
+        template: configmap-config.yaml
+
+  # Test 3: Multiple sections are handled correctly
+  - it: should handle multiple config sections
+    set:
+      config:
+        server:
+          port: 6188
+        database:
+          host: "localhost"
+          port: 5432
+        cache:
+          enabled: true
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[server\]'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[database\]'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[cache\]'
+        template: configmap-config.yaml
+
+  # Test 4: Different data types are formatted correctly
+  - it: should format different data types correctly
+    set:
+      config:
+        test_section:
+          string_val: "test"
+          int_val: 42
+          bool_val: true
+          float_val: 3.14
+          list_val: ["a", "b", "c"]
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'string_val = "test"'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'int_val = 42'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'bool_val = true'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'float_val = 3\.14'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'list_val = \["a", "b", "c"\]'
+        template: configmap-config.yaml
+
+  # Test 5: Raw TOML overrides structured config
+  - it: should use raw TOML when provided
+    set:
+      config:
+        server:
+          port: 6188
+        raw: |
+          [custom]
+          key = "value"
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[custom\]'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'key = "value"'
+        template: configmap-config.yaml
+      - notMatchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[server\]'
+        template: configmap-config.yaml
+
+  # Test 6: Custom TOML is appended
+  - it: should append custom TOML to generated config
+    set:
+      config:
+        server:
+          port: 6188
+        custom: |
+          [extra]
+          custom_key = "custom_value"
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[server\]'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'port = 6188'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[extra\]'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'custom_key = "custom_value"'
+        template: configmap-config.yaml
+
+  # Test 7: Special keys (raw, custom, secrets) are not treated as sections
+  - it: should not create sections for special keys
+    set:
+      config:
+        server:
+          port: 6188
+        secrets:
+          database:
+            password: db-secret
+        custom: ""
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[server\]'
+        template: configmap-config.yaml
+      - notMatchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[secrets\]'
+        template: configmap-config.yaml
+      - notMatchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[custom\]'
+        template: configmap-config.yaml

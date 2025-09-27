@@ -219,23 +219,22 @@ rbac:
   # rbac.rules -- Custom RBAC rules
   rules: []
 
-# configMap -- ConfigMap configuration for application settings
-configMap:
-  # configMap.enabled -- Enable ConfigMap creation
-  enabled: false
-  # configMap.data -- Data to include in the ConfigMap
-  data:
-    ricochet-config.toml: |
-      # Ricochet configuration file
-      # Add your configuration here
+# config -- Ricochet TOML configuration
+# Define arbitrary TOML sections with key-value pairs
+config: {}
+  # Example - any section name with any keys:
+  # "auth.oidc":
+  #   issuer_url: 'http://example.com'
+  #   redirect_uri: 'http://example.com/auth/callback'
+  #
+  # secrets:
+  #   # References to existing Kubernetes secrets
+  #   "auth.oidc":
+  #     client_id: auth-secret        # Gets value from secret ' ' key 'password'
+  #     client_secret: auth-secret    # Gets value from secret 'auth-secret' key
 
-# secret -- Secret configuration for sensitive data
-secret:
-  # secret.enabled -- Enable Secret creation
-  enabled: false
-  # secret.data -- Data to include in the Secret (will be base64 encoded)
-  data: {}
-    # api-key: mysecretkey
+# existingConfigMap -- Use existing ConfigMap instead of generating one
+existingConfigMap: ''
 
 # extraVolumes -- Additional volumes
 extraVolumes: []
@@ -277,7 +276,7 @@ networkPolicy:
         - namespaceSelector:
             matchLabels:
               name: gateway-system
-        # Alternative label for gateway-system namespace  
+        # Alternative label for gateway-system namespace
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: gateway-system

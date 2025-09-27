@@ -2,7 +2,10 @@ suite: network policy
 templates:
   - networkpolicy.yaml
 tests:
-  - it: should create NetworkPolicy when enabled (default)
+  - it: should create NetworkPolicy when enabled
+    set:
+      networkPolicy:
+        enabled: true
     asserts:
       - isKind:
           of: NetworkPolicy
@@ -20,6 +23,9 @@ tests:
           count: 0
 
   - it: should set pod selector correctly
+    set:
+      networkPolicy:
+        enabled: true
     asserts:
       - equal:
           path: spec.podSelector.matchLabels["app.kubernetes.io/name"]
@@ -29,6 +35,9 @@ tests:
           value: RELEASE-NAME
 
   - it: should have both Ingress and Egress policy types
+    set:
+      networkPolicy:
+        enabled: true
     asserts:
       - contains:
           path: spec.policyTypes
@@ -38,6 +47,9 @@ tests:
           content: Egress
 
   - it: should allow ingress on port 6188 from pods and specific namespaces
+    set:
+      networkPolicy:
+        enabled: true
     asserts:
       - equal:
           path: spec.ingress[0].ports[0].protocol
@@ -51,10 +63,13 @@ tests:
           path: spec.ingress[0].from[1].namespaceSelector.matchLabels.name
           value: ingress-nginx
       - equal:
-          path: spec.ingress[0].from[2].namespaceSelector.matchLabels.name
+          path: spec.ingress[0].from[3].namespaceSelector.matchLabels.name
           value: gateway-system
 
   - it: should allow egress to DNS ports
+    set:
+      networkPolicy:
+        enabled: true
     asserts:
       - equal:
           path: spec.egress[0].ports[0].protocol
@@ -70,6 +85,9 @@ tests:
           value: 53
 
   - it: should allow egress to HTTP and HTTPS ports
+    set:
+      networkPolicy:
+        enabled: true
     asserts:
       - equal:
           path: spec.egress[1].ports[0].protocol
@@ -90,7 +108,9 @@ tests:
 
   - it: should use custom ingress rules when provided
     set:
-      networkPolicy.ingress:
+      networkPolicy:
+        enabled: true
+        ingress:
         - from:
             - podSelector:
                 matchLabels:
@@ -108,7 +128,9 @@ tests:
 
   - it: should use custom egress rules when provided
     set:
-      networkPolicy.egress:
+      networkPolicy:
+        enabled: true
+        egress:
         - to:
             - podSelector:
                 matchLabels:
@@ -125,6 +147,9 @@ tests:
           value: 5432
 
   - it: should include correct labels
+    set:
+      networkPolicy:
+        enabled: true
     asserts:
       - equal:
           path: metadata.labels["helm.sh/chart"]

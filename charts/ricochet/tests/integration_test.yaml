@@ -1,0 +1,227 @@
+suite: integration tests
+templates:
+  - configmap-config.yaml
+  - secret-config.yaml
+  - deployment.yaml
+tests:
+  # Test 1: Full configuration with config and secrets
+  - it: should handle complete configuration setup
+    set:
+      config:
+        server:
+          host: "0.0.0.0"
+          port: 6188
+          workers: 4
+        database:
+          type: postgres
+          host: postgres.local
+          port: 5432
+          name: myapp
+          user: appuser
+        cache:
+          enabled: true
+          type: redis
+        secrets:
+          database:
+            password: db-credentials
+            ssl_cert:
+              secretName: db-certs
+              key: client.crt
+          cache:
+            password: redis-auth
+          auth:
+            jwt_secret: auth-secrets
+            api_key: auth-secrets
+    asserts:
+      # ConfigMap assertions
+      - hasDocuments:
+          count: 1
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[server\][\s\S]*host = "0.0.0.0"[\s\S]*port = 6188[\s\S]*workers = 4'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[database\][\s\S]*type = "postgres"'
+        template: configmap-config.yaml
+      
+      # Secret config assertions
+      - hasDocuments:
+          count: 1
+        template: secret-config.yaml
+      - matchRegex:
+          path: stringData["ricochet-config-secret.toml"]
+          pattern: '\[database\]'
+        template: secret-config.yaml
+      
+      # Deployment assertions
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+        template: deployment.yaml
+      - exists:
+          path: spec.template.metadata.annotations["checksum/secret-config"]
+        template: deployment.yaml
+      
+      # Volume assertions - check for secret volumes with full structure
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: secret-db-credentials
+            secret:
+              secretName: db-credentials
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: secret-db-certs
+            secret:
+              secretName: db-certs
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: secret-redis-auth
+            secret:
+              secretName: redis-auth
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: secret-auth-secrets
+            secret:
+              secretName: auth-secrets
+        template: deployment.yaml
+
+  # Test 2: Config with existingConfigMap
+  - it: should use existing ConfigMap when specified
+    set:
+      existingConfigMap: my-existing-config
+      config:
+        server:
+          port: 6188
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: configmap-config.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config
+            configMap:
+              name: my-existing-config
+        template: deployment.yaml
+
+  # Test 3: Raw config overrides everything
+  - it: should override all config when raw is provided
+    set:
+      config:
+        server:
+          port: 6188
+        database:
+          host: localhost
+        raw: |
+          [myapp]
+          version = "1.0.0"
+          debug = true
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[myapp\]'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'version = "1.0.0"'
+        template: configmap-config.yaml
+      - notMatchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[server\]'
+        template: configmap-config.yaml
+      - notMatchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[database\]'
+        template: configmap-config.yaml
+
+  # Test 4: Multiple init containers when both persistence.home and config are enabled
+  - it: should handle persistence with config correctly
+    set:
+      persistence:
+        home:
+          enabled: true
+      config:
+        server:
+          port: 6188
+    asserts:
+      # Should have both fix-permissions and merge-config containers
+      - lengthEqual:
+          path: spec.template.spec.initContainers
+          count: 2
+        template: deployment.yaml
+      # Check for merge-config container at index 1 (after fix-permissions)
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: merge-config
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.initContainers[1].volumeMounts
+          content:
+            name: home-storage
+            mountPath: /opt/ricochet/data
+        template: deployment.yaml
+
+  # Test 5: Edge case - config with only special keys
+  - it: should handle config with only special keys
+    set:
+      config:
+        custom: |
+          [app]
+          key = "value"
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '\[app\]'
+        template: configmap-config.yaml
+
+  # Test 6: Complex data types
+  - it: should handle all supported data types
+    set:
+      config:
+        complex:
+          string: "hello"
+          integer: 42
+          float: 3.14159
+          boolean_true: true
+          boolean_false: false
+          list_strings: ["a", "b", "c"]
+          list_mixed: [1, "two", 3]
+          nested:
+            key1: "val1"
+            key2: "val2"
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'string = "hello"'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'integer = 42'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'float = 3.14159'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'boolean_true = true'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'boolean_false = false'
+        template: configmap-config.yaml
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'list_strings = \["a", "b", "c"\]'
+        template: configmap-config.yaml
