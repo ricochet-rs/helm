@@ -210,6 +210,10 @@ spec:
             - name: launcher-content-storage
               mountPath: {{ .Values.launcher.persistence.content.mountPath }}
             {{- end }}
+            {{- if .Values.launcher.persistence.cache.enabled }}
+            - name: launcher-cache-storage
+              mountPath: {{ .Values.launcher.persistence.cache.mountPath }}
+            {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
