@@ -35,7 +35,7 @@ data:
     {{- end }}
     {{- end }}
 
-    {{- if or .Values.config.launcher_k8s .Values.launcher.persistence.content.enabled .Values.launcher.persistence.cache.enabled }}
+    {{- if or .Values.config.launcher_k8s .Values.launcher.persistence.content.enabled .Values.launcher.persistence.cache.enabled .Values.launcher.imagePullPolicy .Values.launcher.imagePullSecrets }}
     # Launcher Kubernetes configuration
     [launcher_k8s]
     {{- if .Values.config.launcher_k8s }}
@@ -50,6 +50,12 @@ data:
     {{ $key }} = [{{ range $i, $v := $value }}{{ if $i }}, {{ end }}{{ $v | quote }}{{ end }}]
     {{- end }}
     {{- end }}
+    {{- end }}
+    {{- if .Values.launcher.imagePullPolicy }}
+    image_pull_policy = {{ .Values.launcher.imagePullPolicy | quote }}
+    {{- end }}
+    {{- if .Values.launcher.imagePullSecrets }}
+    image_pull_secrets = [{{ range $i, $secret := .Values.launcher.imagePullSecrets }}{{ if $i }}, {{ end }}{{ $secret.name | quote }}{{ end }}]
     {{- end }}
     {{- if .Values.launcher.persistence.content.enabled }}
     pvc_content_name = {{ .Values.launcher.persistence.content.existingClaim | default (printf "%s-launcher-content" (include "ricochet.fullname" .)) | quote }}

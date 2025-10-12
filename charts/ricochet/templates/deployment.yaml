@@ -20,7 +20,7 @@ spec:
     metadata:
       annotations:
         {{- if ne (len .Values.config) 0 }}
-        checksum/config: {{ printf "%s-%s-%s" (toYaml .Values.config | sha256sum) (toYaml .Values.launcher.persistence | sha256sum) (toYaml .Values.execEnv | sha256sum) }}
+        checksum/config: {{ printf "%s-%s-%s-%s-%s" (toYaml .Values.config | sha256sum) (toYaml .Values.launcher.persistence | sha256sum) (toYaml .Values.launcher.imagePullPolicy | sha256sum) (toYaml .Values.launcher.imagePullSecrets | sha256sum) (toYaml .Values.execEnv | sha256sum) }}
         {{- end }}
         {{- if .Values.config.secrets }}
         checksum/secret-config: {{ toYaml .Values.config.secrets | sha256sum }}

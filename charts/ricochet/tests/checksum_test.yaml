@@ -23,7 +23,7 @@ tests:
           path: spec.template.metadata.annotations["checksum/config"]
       - matchRegex:
           path: spec.template.metadata.annotations["checksum/config"]
-          pattern: '^[a-f0-9]{64}-[a-f0-9]{64}-[a-f0-9]{64}$' # Combined hash of config, launcher.persistence, and execEnv
+          pattern: '^[a-f0-9]{64}-[a-f0-9]{64}-[a-f0-9]{64}-[a-f0-9]{64}-[a-f0-9]{64}$' # Combined hash of config, launcher.persistence, launcher.imagePullPolicy, launcher.imagePullSecrets, and execEnv
 
   # Test 3: Secret checksum is added when secrets exist
   - it: should add secret checksum when secrets exist
