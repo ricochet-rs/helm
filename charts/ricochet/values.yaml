@@ -50,6 +50,7 @@ launcher:
   # launcher.imagePullSecrets -- Image pull secrets for pods spawned by launcher
   # These will be injected into every pod spawned by the launcher
   imagePullSecrets: []
+  imagePullPolicy: IfNotPresent
   # - name: launcher-registry-key
   # launcher.persistence -- Persistence configuration for launcher-spawned pods
   persistence:
