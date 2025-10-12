@@ -56,20 +56,20 @@ launcher:
   # - name: launcher-registry-key
   # launcher.persistence -- Persistence configuration for launcher-spawned pods
   persistence:
-    home:
-      # launcher.persistence.home.enabled -- Enable PVC for home (temporary per-pod mount)
+    content:
+      # launcher.persistence.content.enabled -- Enable PVC for content (temporary per-pod mount)
       enabled: false
-      # launcher.persistence.home.storageClass -- Storage class for home PVC
+      # launcher.persistence.content.storageClass -- Storage class for content PVC
       storageClass: ''
-      # launcher.persistence.home.accessMode -- Access mode for home PVC (ReadWriteOnce or ReadWriteMany)
+      # launcher.persistence.content.accessMode -- Access mode for content PVC (ReadWriteOnce or ReadWriteMany)
       accessMode: ReadWriteMany
-      # launcher.persistence.home.size -- Size of the home PVC
+      # launcher.persistence.content.size -- Size of the content PVC
       size: 10Gi
-      # launcher.persistence.home.mountPath -- Mount path for home volume in spawned pods
+      # launcher.persistence.content.mountPath -- Mount path for content volume in spawned pods
       mountPath: /opt/ricochet/data/content
-      # launcher.persistence.home.annotations -- Annotations for the home PVC
+      # launcher.persistence.content.annotations -- Annotations for the content PVC
       annotations: {}
-      # launcher.persistence.home.existingClaim -- Use an existing PVC for home
+      # launcher.persistence.content.existingClaim -- Use an existing PVC for content
       existingClaim: ''
     cache:
       # launcher.persistence.cache.enabled -- Enable shared PVC for cache across all launcher pods

@@ -206,9 +206,9 @@ spec:
               subPath: ricochet-exec-env.toml
               readOnly: true
             {{- end }}
-            {{- if .Values.launcher.persistence.home.enabled }}
-            - name: launcher-home-storage
-              mountPath: {{ .Values.launcher.persistence.home.mountPath }}
+            {{- if .Values.launcher.persistence.content.enabled }}
+            - name: launcher-content-storage
+              mountPath: {{ .Values.launcher.persistence.content.mountPath }}
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -260,10 +260,10 @@ spec:
           configMap:
             name: {{ include "ricochet.fullname" . }}-exec-env
         {{- end }}
-        {{- if .Values.launcher.persistence.home.enabled }}
-        - name: launcher-home-storage
+        {{- if .Values.launcher.persistence.content.enabled }}
+        - name: launcher-content-storage
           persistentVolumeClaim:
-            claimName: {{ .Values.launcher.persistence.home.existingClaim | default (printf "%s-launcher-home" (include "ricochet.fullname" .)) }}
+            claimName: {{ .Values.launcher.persistence.content.existingClaim | default (printf "%s-launcher-content" (include "ricochet.fullname" .)) }}
         {{- end }}
         {{- if .Values.launcher.persistence.cache.enabled }}
         - name: launcher-cache-storage
