@@ -95,23 +95,34 @@ spec:
               # Fetch secret value for {{ $section }}.{{ $key }}
               SECRET_VALUE=$(cat /secrets/{{ $ref.secretName }}/{{ $ref.key | default $key }} 2>/dev/null || echo "")
               if [ -n "$SECRET_VALUE" ]; then
-                # Append to config if not already present
-                if ! grep -q "^\[{{ $section }}\]" /opt/ricochet/data/ricochet-config.toml; then
+                # Check if section exists
+                ESCAPED_SECTION=$(echo "{{ $section }}" | sed 's/\./\\./g')
+                if grep -q "^\[$ESCAPED_SECTION\]" /opt/ricochet/data/ricochet-config.toml; then
+                  # Section exists - append key after the section header
+                  sed -i "/^\[$ESCAPED_SECTION\]/a {{ $key }} = \"$SECRET_VALUE\"" /opt/ricochet/data/ricochet-config.toml
+                else
+                  # Section doesn't exist - create it
                   echo "" >> /opt/ricochet/data/ricochet-config.toml
                   echo "[{{ $section }}]" >> /opt/ricochet/data/ricochet-config.toml
+                  echo '{{ $key }} = "'$SECRET_VALUE'"' >> /opt/ricochet/data/ricochet-config.toml
                 fi
-                echo '{{ $key }} = "'$SECRET_VALUE'"' >> /opt/ricochet/data/ricochet-config.toml
               fi
               {{- end }}
               {{- else }}
               # Simple secret reference for {{ $section }}.{{ $key }}
               SECRET_VALUE=$(cat /secrets/{{ $ref }}/{{ $key }} 2>/dev/null || echo "")
               if [ -n "$SECRET_VALUE" ]; then
-                if ! grep -q "^\[{{ $section }}\]" /opt/ricochet/data/ricochet-config.toml; then
+                # Check if section exists
+                ESCAPED_SECTION=$(echo "{{ $section }}" | sed 's/\./\\./g')
+                if grep -q "^\[$ESCAPED_SECTION\]" /opt/ricochet/data/ricochet-config.toml; then
+                  # Section exists - append key after the section header
+                  sed -i "/^\[$ESCAPED_SECTION\]/a {{ $key }} = \"$SECRET_VALUE\"" /opt/ricochet/data/ricochet-config.toml
+                else
+                  # Section doesn't exist - create it
                   echo "" >> /opt/ricochet/data/ricochet-config.toml
                   echo "[{{ $section }}]" >> /opt/ricochet/data/ricochet-config.toml
+                  echo '{{ $key }} = "'$SECRET_VALUE'"' >> /opt/ricochet/data/ricochet-config.toml
                 fi
-                echo '{{ $key }} = "'$SECRET_VALUE'"' >> /opt/ricochet/data/ricochet-config.toml
               fi
               {{- end }}
               {{- end }}
