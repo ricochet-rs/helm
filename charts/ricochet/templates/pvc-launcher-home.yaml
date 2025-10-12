@@ -11,7 +11,7 @@ metadata:
   {{- end }}
 spec:
   accessModes:
-    - ReadWriteMany
+    - {{ .Values.launcher.persistence.home.accessMode }}
   {{- if .Values.launcher.persistence.home.storageClass }}
   {{- if eq .Values.launcher.persistence.home.storageClass "-" }}
   storageClassName: ""

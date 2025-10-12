@@ -53,6 +53,39 @@ launcher:
   # launcher.imagePullSecrets -- Image pull secrets for pods spawned by launcher
   # These will be injected into every pod spawned by the launcher
   imagePullSecrets: []
+  # - name: launcher-registry-key
+  # launcher.persistence -- Persistence configuration for launcher-spawned pods
+  persistence:
+    home:
+      # launcher.persistence.home.enabled -- Enable PVC for home (temporary per-pod mount)
+      enabled: false
+      # launcher.persistence.home.storageClass -- Storage class for home PVC
+      storageClass: ''
+      # launcher.persistence.home.accessMode -- Access mode for home PVC (ReadWriteOnce or ReadWriteMany)
+      accessMode: ReadWriteMany
+      # launcher.persistence.home.size -- Size of the home PVC
+      size: 10Gi
+      # launcher.persistence.home.mountPath -- Mount path for home volume in spawned pods
+      mountPath: /opt/ricochet/data/content
+      # launcher.persistence.home.annotations -- Annotations for the home PVC
+      annotations: {}
+      # launcher.persistence.home.existingClaim -- Use an existing PVC for home
+      existingClaim: ''
+    cache:
+      # launcher.persistence.cache.enabled -- Enable shared PVC for cache across all launcher pods
+      enabled: false
+      # launcher.persistence.cache.storageClass -- Storage class for cache PVC
+      storageClass: ''
+      # launcher.persistence.cache.accessMode -- Access mode for cache PVC (ReadWriteOnce or ReadWriteMany)
+      accessMode: ReadWriteMany
+      # launcher.persistence.cache.size -- Size of the shared cache PVC
+      size: 20Gi
+      # launcher.persistence.cache.mountPath -- Mount path for cache volume in spawned pods
+      mountPath: /opt/ricochet/cache
+      # launcher.persistence.cache.annotations -- Annotations for the cache PVC
+      annotations: {}
+      # launcher.persistence.cache.existingClaim -- Use an existing PVC for shared cache
+      existingClaim: ''
 
 execEnv:
   # execEnv.config -- Execution environment configuration (TOML format)
@@ -69,35 +102,6 @@ execEnv:
   #   python_versions = [""]
   #   description = "Default Ricochet runner with R support"
   #   arch = ["linux/amd64", "linux/arm64"]
-  # - name: launcher-registry-key
-  # launcher.persistence -- Persistence configuration for launcher-spawned pods
-  persistence:
-    home:
-      # launcher.persistence.home.enabled -- Enable RWX PVC for home (temporary per-pod mount)
-      enabled: false
-      # launcher.persistence.home.storageClass -- Storage class for home PVC (must support ReadWriteMany)
-      storageClass: ''
-      # launcher.persistence.home.size -- Size of the home PVC
-      size: 10Gi
-      # launcher.persistence.home.mountPath -- Mount path for home volume in spawned pods
-      mountPath: /opt/ricochet/data/content
-      # launcher.persistence.home.annotations -- Annotations for the home PVC
-      annotations: {}
-      # launcher.persistence.home.existingClaim -- Use an existing PVC for home
-      existingClaim: ''
-    cache:
-      # launcher.persistence.cache.enabled -- Enable shared RWX PVC for cache across all launcher pods
-      enabled: false
-      # launcher.persistence.cache.storageClass -- Storage class for cache PVC (must support ReadWriteMany)
-      storageClass: ''
-      # launcher.persistence.cache.size -- Size of the shared cache PVC
-      size: 20Gi
-      # launcher.persistence.cache.mountPath -- Mount path for cache volume in spawned pods
-      mountPath: /opt/ricochet/cache
-      # launcher.persistence.cache.annotations -- Annotations for the cache PVC
-      annotations: {}
-      # launcher.persistence.cache.existingClaim -- Use an existing PVC for shared cache
-      existingClaim: ''
 
 service:
   # service.type -- Service type
