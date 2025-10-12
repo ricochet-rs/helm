@@ -248,27 +248,18 @@ tests:
       persistence:
         home:
           enabled: true
-        cache:
-          enabled: true
       execEnv:
         config: |
           [[image.r-default]]
           image = "reg.ricochet.rs/ricochet/exec-env-r:4.5-alpine"
     asserts:
-      # Should have all three volumes
+      # Should have both volumes
       - contains:
           path: spec.template.spec.volumes
           content:
             name: home-storage
             persistentVolumeClaim:
               claimName: RELEASE-NAME-ricochet-home
-        template: deployment.yaml
-      - contains:
-          path: spec.template.spec.volumes
-          content:
-            name: cache-storage
-            persistentVolumeClaim:
-              claimName: RELEASE-NAME-ricochet-cache
         template: deployment.yaml
       - contains:
           path: spec.template.spec.volumes

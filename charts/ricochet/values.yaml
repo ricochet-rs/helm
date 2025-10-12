@@ -229,21 +229,6 @@ readinessProbe:
 
 # persistence -- Persistence configuration for multiple volumes
 persistence:
-  cache:
-    # persistence.cache.enabled -- Enable persistent volume for cache
-    enabled: false
-    # persistence.cache.storageClass -- Storage class for the cache PVC (use '-' for default)
-    storageClass: ''
-    # persistence.cache.accessMode -- Access mode for the cache PVC
-    accessMode: ReadWriteOnce
-    # persistence.cache.size -- Size of the cache PVC
-    size: 10Gi
-    # persistence.cache.mountPath -- Mount path for the cache volume
-    mountPath: /opt/ricochet/renv/cache
-    # persistence.cache.annotations -- Annotations for the cache PVC
-    annotations: {}
-    # persistence.cache.existingClaim -- Use an existing PVC for cache
-    existingClaim: ''
   home:
     # persistence.home.enabled -- Enable persistent volume for home
     enabled: false

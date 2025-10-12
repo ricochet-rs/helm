@@ -53,17 +53,10 @@ spec:
             - |
               mkdir -p {{ .Values.persistence.home.mountPath }}/content
               chown -R 1000:1000 {{ .Values.persistence.home.mountPath }}
-              {{- if .Values.persistence.cache.enabled }}
-              chown -R 1000:1000 {{ .Values.persistence.cache.mountPath }} || true
-              {{- end }}
           securityContext:
             runAsUser: 0
             runAsNonRoot: false
           volumeMounts:
-            {{- if .Values.persistence.cache.enabled }}
-            - name: cache-storage
-              mountPath: {{ .Values.persistence.cache.mountPath }}
-            {{- end }}
             {{- if .Values.persistence.home.enabled }}
             - name: home-storage
               mountPath: {{ .Values.persistence.home.mountPath }}
@@ -200,10 +193,6 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            {{- if .Values.persistence.cache.enabled }}
-            - name: cache-storage
-              mountPath: {{ .Values.persistence.cache.mountPath }}
-            {{- end }}
             {{- if .Values.persistence.home.enabled }}
             - name: home-storage
               mountPath: {{ .Values.persistence.home.mountPath }}
@@ -228,11 +217,6 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       volumes:
-        {{- if .Values.persistence.cache.enabled }}
-        - name: cache-storage
-          persistentVolumeClaim:
-            claimName: {{ .Values.persistence.cache.existingClaim | default (printf "%s-cache" (include "ricochet.fullname" .)) }}
-        {{- end }}
         {{- if .Values.persistence.home.enabled }}
         - name: home-storage
           persistentVolumeClaim:
