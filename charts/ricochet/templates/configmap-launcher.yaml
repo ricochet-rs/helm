@@ -1,0 +1,11 @@
+{{- if .Values.launcher.config -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ricochet.fullname" . }}-launcher-config
+  labels:
+    {{- include "ricochet.labels" . | nindent 4 }}
+data:
+  launcher-config.toml: |
+{{ .Values.launcher.config | indent 4 }}
+{{- end }}

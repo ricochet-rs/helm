@@ -200,7 +200,12 @@ spec:
             - name: config-merged
               mountPath: /opt/ricochet/data
             {{- end }}
-
+            {{- if .Values.execEnv.config }}
+            - name: exec-env-config
+              mountPath: /var/lib/ricochet/data/ricochet-exec-env.toml
+              subPath: ricochet-exec-env.toml
+              readOnly: true
+            {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -245,6 +250,11 @@ spec:
         {{- if and (ne (len .Values.config) 0) (not .Values.persistence.home.enabled) }}
         - name: config-merged
           emptyDir: {}
+        {{- end }}
+        {{- if .Values.execEnv.config }}
+        - name: exec-env-config
+          configMap:
+            name: {{ include "ricochet.fullname" . }}-exec-env
         {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}

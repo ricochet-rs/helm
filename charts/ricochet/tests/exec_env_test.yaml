@@ -1,0 +1,299 @@
+suite: exec-env configuration tests
+templates:
+  - configmap-exec-env.yaml
+  - deployment.yaml
+tests:
+  # Test 1: ConfigMap is not created when execEnv.config is empty
+  - it: should not create ConfigMap when execEnv.config is empty
+    set:
+      execEnv:
+        config: ''
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: configmap-exec-env.yaml
+
+  # Test 2: ConfigMap is not created when execEnv is not set
+  - it: should not create ConfigMap when execEnv is not defined
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: configmap-exec-env.yaml
+
+  # Test 3: ConfigMap is created with basic exec-env config
+  - it: should create ConfigMap with basic exec-env config
+    set:
+      execEnv:
+        config: |
+          [[image.r-default]]
+          image = "reg.ricochet.rs/ricochet/exec-env-r:4.5-alpine"
+          os = "alpine-3.22"
+          r_versions = ["4.5.1"]
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: configmap-exec-env.yaml
+      - isKind:
+          of: ConfigMap
+        template: configmap-exec-env.yaml
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-ricochet-exec-env
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: '\[\[image\.r-default\]\]'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: 'image = "reg\.ricochet\.rs/ricochet/exec-env-r:4\.5-alpine"'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: 'os = "alpine-3\.22"'
+        template: configmap-exec-env.yaml
+
+  # Test 4: ConfigMap contains complete TOML array structure
+  - it: should handle complete exec-env TOML structure
+    set:
+      execEnv:
+        config: |
+          [[image.r-default]]
+          image = "reg.ricochet.rs/ricochet/exec-env-r:4.5-alpine"
+          os = "alpine-3.22"
+          r_versions = ["4.5.1"]
+          julia_versions = [""]
+          python_versions = [""]
+          description = "Default Ricochet runner with R support"
+          arch = ["linux/amd64", "linux/arm64"]
+
+          [[image."r-4.4"]]
+          image = "reg.ricochet.rs/ricochet/exec-env-r:4.4-alpine"
+          os = "alpine-3.21"
+          r_versions = ["4.4.3"]
+          julia_versions = [""]
+          python_versions = [""]
+          description = "Ricochet runner with R 4.4"
+          arch = ["linux/amd64", "linux/arm64"]
+    asserts:
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: '\[\[image\.r-default\]\]'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: '\[\[image\."r-4\.4"\]\]'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: 'description = "Default Ricochet runner with R support"'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: 'description = "Ricochet runner with R 4\.4"'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: 'arch = \["linux/amd64", "linux/arm64"\]'
+        template: configmap-exec-env.yaml
+
+  # Test 5: ConfigMap has correct labels
+  - it: should have correct labels and component annotation
+    set:
+      execEnv:
+        config: |
+          [[image.test]]
+          image = "test:latest"
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: exec-env
+        template: configmap-exec-env.yaml
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: ricochet
+        template: configmap-exec-env.yaml
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: RELEASE-NAME
+        template: configmap-exec-env.yaml
+
+  # Test 6: Volume is created in deployment when execEnv.config is set
+  - it: should create volume in deployment when execEnv.config is set
+    set:
+      execEnv:
+        config: |
+          [[image.r-default]]
+          image = "reg.ricochet.rs/ricochet/exec-env-r:4.5-alpine"
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: exec-env-config
+            configMap:
+              name: RELEASE-NAME-ricochet-exec-env
+        template: deployment.yaml
+
+  # Test 7: Volume is not created when execEnv.config is empty
+  - it: should not create volume when execEnv.config is empty
+    set:
+      execEnv:
+        config: ''
+      config:
+        server:
+          port: 6188
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: exec-env-config
+        template: deployment.yaml
+
+  # Test 8: Volume mount is created at correct path
+  - it: should mount exec-env config at correct path
+    set:
+      execEnv:
+        config: |
+          [[image.r-default]]
+          image = "reg.ricochet.rs/ricochet/exec-env-r:4.5-alpine"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: exec-env-config
+            mountPath: /var/lib/ricochet/data/ricochet-exec-env.toml
+            subPath: ricochet-exec-env.toml
+            readOnly: true
+        template: deployment.yaml
+
+  # Test 9: Volume mount is not created when execEnv.config is empty
+  - it: should not mount volume when execEnv.config is empty
+    set:
+      execEnv:
+        config: ''
+      config:
+        server:
+          port: 6188
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: exec-env-config
+        template: deployment.yaml
+
+  # Test 10: Works with custom fullnameOverride
+  - it: should respect fullnameOverride in ConfigMap name
+    set:
+      fullnameOverride: my-custom-name
+      execEnv:
+        config: |
+          [[image.test]]
+          image = "test:latest"
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-custom-name-exec-env
+        template: configmap-exec-env.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: exec-env-config
+            configMap:
+              name: my-custom-name-exec-env
+        template: deployment.yaml
+
+  # Test 11: Multi-language environment config
+  - it: should handle multi-language environment configurations
+    set:
+      execEnv:
+        config: |
+          [[image.python-default]]
+          image = "reg.ricochet.rs/ricochet/exec-env-python:3.12-alpine"
+          os = "alpine-3.22"
+          r_versions = [""]
+          julia_versions = [""]
+          python_versions = ["3.12.1"]
+          description = "Python 3.12 environment"
+          arch = ["linux/amd64", "linux/arm64"]
+
+          [[image.julia-default]]
+          image = "reg.ricochet.rs/ricochet/exec-env-julia:1.10-alpine"
+          os = "alpine-3.22"
+          r_versions = [""]
+          julia_versions = ["1.10.0"]
+          python_versions = [""]
+          description = "Julia 1.10 environment"
+          arch = ["linux/amd64"]
+    asserts:
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: '\[\[image\.python-default\]\]'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: '\[\[image\.julia-default\]\]'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: 'python_versions = \["3\.12\.1"\]'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: 'julia_versions = \["1\.10\.0"\]'
+        template: configmap-exec-env.yaml
+
+  # Test 12: Integration with persistence
+  - it: should work alongside persistence volumes
+    set:
+      persistence:
+        home:
+          enabled: true
+        cache:
+          enabled: true
+      execEnv:
+        config: |
+          [[image.r-default]]
+          image = "reg.ricochet.rs/ricochet/exec-env-r:4.5-alpine"
+    asserts:
+      # Should have all three volumes
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: home-storage
+            persistentVolumeClaim:
+              claimName: RELEASE-NAME-ricochet-home
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: cache-storage
+            persistentVolumeClaim:
+              claimName: RELEASE-NAME-ricochet-cache
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: exec-env-config
+            configMap:
+              name: RELEASE-NAME-ricochet-exec-env
+        template: deployment.yaml
+
+  # Test 13: ConfigMap content is exactly as provided (verbatim)
+  - it: should preserve exact TOML formatting and spacing
+    set:
+      execEnv:
+        config: |
+          # Comment line
+          [[image.test]]
+          image = "test:latest"
+          # Another comment
+          version = "1.0"
+    asserts:
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: '# Comment line'
+        template: configmap-exec-env.yaml
+      - matchRegex:
+          path: data["ricochet-exec-env.toml"]
+          pattern: '# Another comment'
+        template: configmap-exec-env.yaml

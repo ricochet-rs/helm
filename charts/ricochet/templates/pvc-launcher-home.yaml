@@ -1,0 +1,25 @@
+{{- if and .Values.launcher.persistence.home.enabled (not .Values.launcher.persistence.home.existingClaim) -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ricochet.fullname" . }}-launcher-home
+  labels:
+    {{- include "ricochet.labels" . | nindent 4 }}
+  {{- with .Values.launcher.persistence.home.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  {{- if .Values.launcher.persistence.home.storageClass }}
+  {{- if eq .Values.launcher.persistence.home.storageClass "-" }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.launcher.persistence.home.storageClass | quote }}
+  {{- end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.launcher.persistence.home.size }}
+{{- end }}

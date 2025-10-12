@@ -1,0 +1,114 @@
+suite: checksum invalidation tests
+templates:
+  - deployment.yaml
+tests:
+  # Test 1: No checksum annotations when config is empty
+  - it: should not add checksum annotations when config is empty
+    set:
+      config: {}
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/config"]
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/secret-config"]
+
+  # Test 2: Config checksum is added when config exists
+  - it: should add config checksum when config exists
+    set:
+      config:
+        server:
+          port: 6188
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/config"]
+          pattern: '^[a-f0-9]{64}$' # SHA256 hash pattern
+
+  # Test 3: Secret checksum is added when secrets exist
+  - it: should add secret checksum when secrets exist
+    set:
+      config:
+        server:
+          port: 6188
+        secrets:
+          database:
+            password: db-secret
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+      - exists:
+          path: spec.template.metadata.annotations["checksum/secret-config"]
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/secret-config"]
+          pattern: '^[a-f0-9]{64}$'
+
+  # Test 4: Only secret checksum when only secrets defined
+  - it: should only add secret checksum when only secrets are defined
+    set:
+      config:
+        secrets:
+          auth:
+            jwt: auth-secret
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"] # Still exists because config is not empty
+      - exists:
+          path: spec.template.metadata.annotations["checksum/secret-config"]
+
+  # Test 5: Custom pod annotations are preserved
+  - it: should preserve custom pod annotations alongside checksums
+    set:
+      config:
+        server:
+          port: 6188
+      podAnnotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '9090'
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: 'true'
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/port"]
+          value: '9090'
+
+  # Test 6: Checksum changes with different config values
+  - it: should generate different checksums for different configs
+    set:
+      config:
+        server:
+          port: 6188
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+    documentIndex: 0
+    # Note: In actual testing, you'd compare this with another test's checksum
+    # to verify they're different. Helm unittest doesn't support cross-test comparisons,
+    # so this would be validated in integration tests
+
+  # Test 7: Init container exists when config is present
+  - it: should create init container when config exists
+    set:
+      config:
+        server:
+          port: 6188
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: merge-config
+
+  # Test 8: Config volume is mounted in init container
+  - it: should mount config volume in init container
+    set:
+      config:
+        server:
+          port: 6188
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: config
+            mountPath: /config

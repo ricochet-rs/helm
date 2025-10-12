@@ -111,13 +111,13 @@ tests:
       networkPolicy:
         enabled: true
         ingress:
-        - from:
-            - podSelector:
-                matchLabels:
-                  app: frontend
-          ports:
-            - protocol: TCP
-              port: 8080
+          - from:
+              - podSelector:
+                  matchLabels:
+                    app: frontend
+            ports:
+              - protocol: TCP
+                port: 8080
     asserts:
       - equal:
           path: spec.ingress[0].from[0].podSelector.matchLabels.app
@@ -131,13 +131,13 @@ tests:
       networkPolicy:
         enabled: true
         egress:
-        - to:
-            - podSelector:
-                matchLabels:
-                  app: database
-          ports:
-            - protocol: TCP
-              port: 5432
+          - to:
+              - podSelector:
+                  matchLabels:
+                    app: database
+            ports:
+              - protocol: TCP
+                port: 5432
     asserts:
       - equal:
           path: spec.egress[0].to[0].podSelector.matchLabels.app
