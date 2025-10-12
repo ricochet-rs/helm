@@ -47,9 +47,6 @@ imagePullSecrets: []
 # - name: myregistrykey
 
 launcher:
-  # launcher.config -- Verbatim configuration file content for the launcher
-  # This will be mounted as a configuration file in the container
-  config: ''
   # launcher.imagePullSecrets -- Image pull secrets for pods spawned by launcher
   # These will be injected into every pod spawned by the launcher
   imagePullSecrets: []
