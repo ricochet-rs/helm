@@ -253,9 +253,9 @@ serviceAccount:
 
 # rbac -- RBAC configuration
 rbac:
-  # rbac.create -- Create RBAC resources
-  create: false
-  # rbac.rules -- Custom RBAC rules
+  # rbac.create -- Create RBAC resources (required for launcher to spawn pods)
+  create: true
+  # rbac.rules -- Custom RBAC rules (leave empty to use default launcher permissions)
   rules: []
 
 # config -- Ricochet TOML configuration
