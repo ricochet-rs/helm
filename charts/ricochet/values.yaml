@@ -90,7 +90,7 @@ launcher:
 execEnv:
   # execEnv.config -- Execution environment configuration (TOML format)
   # Defines available container images for different language runtimes
-  # This will be mounted at /var/lib/ricochet/data/ricochet-exec-env.toml
+  # This will be mounted at /opt/ricochet/data/ricochet-exec-env.toml
   config: ''
   # Example:
   # config: |

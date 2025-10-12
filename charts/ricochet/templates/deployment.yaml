@@ -202,7 +202,7 @@ spec:
             {{- end }}
             {{- if .Values.execEnv.config }}
             - name: exec-env-config
-              mountPath: /var/lib/ricochet/data/ricochet-exec-env.toml
+              mountPath: /opt/ricochet/data/ricochet-exec-env.toml
               subPath: ricochet-exec-env.toml
               readOnly: true
             {{- end }}
