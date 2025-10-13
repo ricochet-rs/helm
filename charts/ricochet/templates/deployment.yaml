@@ -20,7 +20,7 @@ spec:
     metadata:
       annotations:
         {{- if ne (len .Values.config) 0 }}
-        checksum/config: {{ printf "%s-%s-%s-%s-%s" (toYaml .Values.config | sha256sum) (toYaml .Values.launcher.persistence | sha256sum) (toYaml .Values.launcher.imagePullPolicy | sha256sum) (toYaml .Values.launcher.imagePullSecrets | sha256sum) (toYaml .Values.execEnv | sha256sum) }}
+        checksum/config: {{ printf "%s-%s-%s-%s-%s" (toYaml .Values.config | sha256sum) (toYaml .Values.launcher.deployment.persistence | sha256sum) (toYaml .Values.launcher.deployment.imagePullPolicy | sha256sum) (toYaml .Values.launcher.deployment.imagePullSecrets | sha256sum) (toYaml .Values.execEnv | sha256sum) }}
         {{- end }}
         {{- if .Values.config.secrets }}
         checksum/secret-config: {{ toYaml .Values.config.secrets | sha256sum }}
@@ -206,13 +206,13 @@ spec:
               subPath: ricochet-exec-env.toml
               readOnly: true
             {{- end }}
-            {{- if .Values.launcher.persistence.content.enabled }}
+            {{- if .Values.launcher.deployment.persistence.content.enabled }}
             - name: launcher-content-storage
-              mountPath: {{ .Values.launcher.persistence.content.mountPath }}
+              mountPath: {{ .Values.launcher.deployment.persistence.content.mountPath }}
             {{- end }}
-            {{- if .Values.launcher.persistence.cache.enabled }}
+            {{- if .Values.launcher.deployment.persistence.cache.enabled }}
             - name: launcher-cache-storage
-              mountPath: {{ .Values.launcher.persistence.cache.mountPath }}
+              mountPath: {{ .Values.launcher.deployment.persistence.cache.mountPath }}
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -259,15 +259,15 @@ spec:
           configMap:
             name: {{ include "ricochet.fullname" . }}-exec-env
         {{- end }}
-        {{- if .Values.launcher.persistence.content.enabled }}
+        {{- if .Values.launcher.deployment.persistence.content.enabled }}
         - name: launcher-content-storage
           persistentVolumeClaim:
-            claimName: {{ .Values.launcher.persistence.content.existingClaim | default (printf "%s-launcher-content" (include "ricochet.fullname" .)) }}
+            claimName: {{ .Values.launcher.deployment.persistence.content.existingClaim | default (printf "%s-launcher-content" (include "ricochet.fullname" .)) }}
         {{- end }}
-        {{- if .Values.launcher.persistence.cache.enabled }}
+        {{- if .Values.launcher.deployment.persistence.cache.enabled }}
         - name: launcher-cache-storage
           persistentVolumeClaim:
-            claimName: {{ .Values.launcher.persistence.cache.existingClaim | default (printf "%s-launcher-cache" (include "ricochet.fullname" .)) }}
+            claimName: {{ .Values.launcher.deployment.persistence.cache.existingClaim | default (printf "%s-launcher-cache" (include "ricochet.fullname" .)) }}
         {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}

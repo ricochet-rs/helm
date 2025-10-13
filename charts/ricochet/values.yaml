@@ -47,43 +47,54 @@ imagePullSecrets: []
 # - name: myregistrykey
 
 launcher:
-  # launcher.imagePullSecrets -- Image pull secrets for pods spawned by launcher
-  # These will be injected into every pod spawned by the launcher
-  imagePullSecrets: []
-  imagePullPolicy: IfNotPresent
-  # - name: launcher-registry-key
-  # launcher.persistence -- Persistence configuration for launcher-spawned pods
-  persistence:
-    content:
-      # launcher.persistence.content.enabled -- Enable PVC for content (temporary per-pod mount)
-      enabled: false
-      # launcher.persistence.content.storageClass -- Storage class for content PVC
-      storageClass: ''
-      # launcher.persistence.content.accessMode -- Access mode for content PVC (ReadWriteOnce or ReadWriteMany)
-      accessMode: ReadWriteMany
-      # launcher.persistence.content.size -- Size of the content PVC
-      size: 10Gi
-      # launcher.persistence.content.mountPath -- Mount path for content volume in spawned pods
-      mountPath: /opt/ricochet/data/content
-      # launcher.persistence.content.annotations -- Annotations for the content PVC
-      annotations: {}
-      # launcher.persistence.content.existingClaim -- Use an existing PVC for content
-      existingClaim: ''
-    cache:
-      # launcher.persistence.cache.enabled -- Enable shared PVC for cache across all launcher pods
-      enabled: false
-      # launcher.persistence.cache.storageClass -- Storage class for cache PVC
-      storageClass: ''
-      # launcher.persistence.cache.accessMode -- Access mode for cache PVC (ReadWriteOnce or ReadWriteMany)
-      accessMode: ReadWriteMany
-      # launcher.persistence.cache.size -- Size of the shared cache PVC
-      size: 20Gi
-      # launcher.persistence.cache.mountPath -- Mount path for cache volume in spawned pods
-      mountPath: /opt/ricochet/cache
-      # launcher.persistence.cache.annotations -- Annotations for the cache PVC
-      annotations: {}
-      # launcher.persistence.cache.existingClaim -- Use an existing PVC for shared cache
-      existingClaim: ''
+  deployment:
+    # launcher.deployment.strategy -- Update strategy for launcher-spawned deployments
+    strategy:
+      # launcher.deployment.strategy.type -- Strategy type (RollingUpdate or Recreate)
+      type: RollingUpdate
+      rollingUpdate:
+        # launcher.deployment.strategy.rollingUpdate.maxSurge -- Maximum number of pods that can be created over the desired number of pods
+        maxSurge: 1
+        # launcher.deployment.strategy.rollingUpdate.maxUnavailable -- Maximum number of pods that can be unavailable during the update process
+        maxUnavailable: 0
+    # launcher.deployment.imagePullSecrets -- Image pull secrets for pods spawned by launcher
+    # These will be injected into every pod spawned by the launcher
+    imagePullSecrets: []
+    # - name: launcher-registry-key
+    # launcher.deployment.imagePullPolicy -- Image pull policy for launcher-spawned pods
+    imagePullPolicy: IfNotPresent
+    # launcher.deployment.persistence -- Persistence configuration for launcher-spawned pods
+    persistence:
+      content:
+        # launcher.deployment.persistence.content.enabled -- Enable PVC for content (temporary per-pod mount)
+        enabled: false
+        # launcher.deployment.persistence.content.storageClass -- Storage class for content PVC
+        storageClass: ''
+        # launcher.deployment.persistence.content.accessMode -- Access mode for content PVC (ReadWriteOnce or ReadWriteMany)
+        accessMode: ReadWriteMany
+        # launcher.deployment.persistence.content.size -- Size of the content PVC
+        size: 10Gi
+        # launcher.deployment.persistence.content.mountPath -- Mount path for content volume in spawned pods
+        mountPath: /opt/ricochet/data/content
+        # launcher.deployment.persistence.content.annotations -- Annotations for the content PVC
+        annotations: {}
+        # launcher.deployment.persistence.content.existingClaim -- Use an existing PVC for content
+        existingClaim: ''
+      cache:
+        # launcher.deployment.persistence.cache.enabled -- Enable shared PVC for cache across all launcher pods
+        enabled: false
+        # launcher.deployment.persistence.cache.storageClass -- Storage class for cache PVC
+        storageClass: ''
+        # launcher.deployment.persistence.cache.accessMode -- Access mode for cache PVC (ReadWriteOnce or ReadWriteMany)
+        accessMode: ReadWriteMany
+        # launcher.deployment.persistence.cache.size -- Size of the shared cache PVC
+        size: 20Gi
+        # launcher.deployment.persistence.cache.mountPath -- Mount path for cache volume in spawned pods
+        mountPath: /opt/ricochet/cache
+        # launcher.deployment.persistence.cache.annotations -- Annotations for the cache PVC
+        annotations: {}
+        # launcher.deployment.persistence.cache.existingClaim -- Use an existing PVC for shared cache
+        existingClaim: ''
 
 execEnv:
   # execEnv.config -- Execution environment configuration (TOML format)

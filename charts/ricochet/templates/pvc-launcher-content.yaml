@@ -1,25 +1,25 @@
-{{- if and .Values.launcher.persistence.content.enabled (not .Values.launcher.persistence.content.existingClaim) -}}
+{{- if and .Values.launcher.deployment.persistence.content.enabled (not .Values.launcher.deployment.persistence.content.existingClaim) -}}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "ricochet.fullname" . }}-launcher-content
   labels:
     {{- include "ricochet.labels" . | nindent 4 }}
-  {{- with .Values.launcher.persistence.content.annotations }}
+  {{- with .Values.launcher.deployment.persistence.content.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
   accessModes:
-    - {{ .Values.launcher.persistence.content.accessMode }}
-  {{- if .Values.launcher.persistence.content.storageClass }}
-  {{- if eq .Values.launcher.persistence.content.storageClass "-" }}
+    - {{ .Values.launcher.deployment.persistence.content.accessMode }}
+  {{- if .Values.launcher.deployment.persistence.content.storageClass }}
+  {{- if eq .Values.launcher.deployment.persistence.content.storageClass "-" }}
   storageClassName: ""
   {{- else }}
-  storageClassName: {{ .Values.launcher.persistence.content.storageClass | quote }}
+  storageClassName: {{ .Values.launcher.deployment.persistence.content.storageClass | quote }}
   {{- end }}
   {{- end }}
   resources:
     requests:
-      storage: {{ .Values.launcher.persistence.content.size }}
+      storage: {{ .Values.launcher.deployment.persistence.content.size }}
 {{- end }}

@@ -35,7 +35,7 @@ data:
     {{- end }}
     {{- end }}
 
-    {{- if or .Values.config.launcher_k8s .Values.launcher.persistence.content.enabled .Values.launcher.persistence.cache.enabled .Values.launcher.imagePullPolicy .Values.launcher.imagePullSecrets }}
+    {{- if or .Values.config.launcher_k8s .Values.launcher.deployment.persistence.content.enabled .Values.launcher.deployment.persistence.cache.enabled .Values.launcher.deployment.imagePullPolicy .Values.launcher.deployment.imagePullSecrets .Values.launcher.deployment.strategy }}
     # Launcher Kubernetes configuration
     [launcher_k8s]
     {{- if .Values.config.launcher_k8s }}
@@ -51,17 +51,30 @@ data:
     {{- end }}
     {{- end }}
     {{- end }}
-    {{- if .Values.launcher.imagePullPolicy }}
-    image_pull_policy = {{ .Values.launcher.imagePullPolicy | quote }}
+    {{- if .Values.launcher.deployment.strategy }}
+    {{- if .Values.launcher.deployment.strategy.type }}
+    strategy_type = {{ .Values.launcher.deployment.strategy.type | quote }}
     {{- end }}
-    {{- if .Values.launcher.imagePullSecrets }}
-    image_pull_secrets = [{{ range $i, $secret := .Values.launcher.imagePullSecrets }}{{ if $i }}, {{ end }}{{ $secret.name | quote }}{{ end }}]
+    {{- if and (eq .Values.launcher.deployment.strategy.type "RollingUpdate") .Values.launcher.deployment.strategy.rollingUpdate }}
+    {{- if .Values.launcher.deployment.strategy.rollingUpdate.maxSurge }}
+    strategy_max_surge = {{ .Values.launcher.deployment.strategy.rollingUpdate.maxSurge }}
     {{- end }}
-    {{- if .Values.launcher.persistence.content.enabled }}
-    pvc_content_name = {{ .Values.launcher.persistence.content.existingClaim | default (printf "%s-launcher-content" (include "ricochet.fullname" .)) | quote }}
+    {{- if .Values.launcher.deployment.strategy.rollingUpdate.maxUnavailable }}
+    strategy_max_unavailable = {{ .Values.launcher.deployment.strategy.rollingUpdate.maxUnavailable }}
     {{- end }}
-    {{- if .Values.launcher.persistence.cache.enabled }}
-    pvc_cache_name = {{ .Values.launcher.persistence.cache.existingClaim | default (printf "%s-launcher-cache" (include "ricochet.fullname" .)) | quote }}
+    {{- end }}
+    {{- end }}
+    {{- if .Values.launcher.deployment.imagePullPolicy }}
+    image_pull_policy = {{ .Values.launcher.deployment.imagePullPolicy | quote }}
+    {{- end }}
+    {{- if .Values.launcher.deployment.imagePullSecrets }}
+    image_pull_secrets = [{{ range $i, $secret := .Values.launcher.deployment.imagePullSecrets }}{{ if $i }}, {{ end }}{{ $secret.name | quote }}{{ end }}]
+    {{- end }}
+    {{- if .Values.launcher.deployment.persistence.content.enabled }}
+    pvc_content_name = {{ .Values.launcher.deployment.persistence.content.existingClaim | default (printf "%s-launcher-content" (include "ricochet.fullname" .)) | quote }}
+    {{- end }}
+    {{- if .Values.launcher.deployment.persistence.cache.enabled }}
+    pvc_cache_name = {{ .Values.launcher.deployment.persistence.cache.existingClaim | default (printf "%s-launcher-cache" (include "ricochet.fullname" .)) | quote }}
     {{- end }}
     {{- end }}
 
