@@ -17,7 +17,7 @@ tests:
     set:
       config:
         server:
-          host: "0.0.0.0"
+          host: '0.0.0.0'
           port: 6188
     asserts:
       - hasDocuments:
@@ -46,7 +46,7 @@ tests:
         server:
           port: 6188
         database:
-          host: "localhost"
+          host: 'localhost'
           port: 5432
         cache:
           enabled: true
@@ -69,11 +69,11 @@ tests:
     set:
       config:
         test_section:
-          string_val: "test"
+          string_val: 'test'
           int_val: 42
           bool_val: true
           float_val: 3.14
-          list_val: ["a", "b", "c"]
+          list_val: ['a', 'b', 'c']
     asserts:
       - matchRegex:
           path: data["ricochet-config.toml"]
@@ -155,7 +155,7 @@ tests:
         secrets:
           database:
             password: db-secret
-        custom: ""
+        custom: ''
     asserts:
       - matchRegex:
           path: data["ricochet-config.toml"]

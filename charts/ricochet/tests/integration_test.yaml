@@ -9,7 +9,7 @@ tests:
     set:
       config:
         server:
-          host: "0.0.0.0"
+          host: '0.0.0.0'
           port: 6188
           workers: 4
         database:
@@ -45,7 +45,7 @@ tests:
           path: data["ricochet-config.toml"]
           pattern: '\[database\][\s\S]*type = "postgres"'
         template: configmap-config.yaml
-      
+
       # Secret config assertions
       - hasDocuments:
           count: 1
@@ -54,7 +54,7 @@ tests:
           path: stringData["ricochet-config-secret.toml"]
           pattern: '\[database\]'
         template: secret-config.yaml
-      
+
       # Deployment assertions
       - exists:
           path: spec.template.metadata.annotations["checksum/config"]
@@ -62,7 +62,7 @@ tests:
       - exists:
           path: spec.template.metadata.annotations["checksum/secret-config"]
         template: deployment.yaml
-      
+
       # Volume assertions - check for secret volumes with full structure
       - contains:
           path: spec.template.spec.volumes
@@ -190,16 +190,16 @@ tests:
     set:
       config:
         complex:
-          string: "hello"
+          string: 'hello'
           integer: 42
           float: 3.14159
           boolean_true: true
           boolean_false: false
-          list_strings: ["a", "b", "c"]
-          list_mixed: [1, "two", 3]
+          list_strings: ['a', 'b', 'c']
+          list_mixed: [1, 'two', 3]
           nested:
-            key1: "val1"
-            key2: "val2"
+            key1: 'val1'
+            key2: 'val2'
     asserts:
       - matchRegex:
           path: data["ricochet-config.toml"]

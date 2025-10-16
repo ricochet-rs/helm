@@ -1,0 +1,12 @@
+{{- if .Values.execEnv.config -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ricochet.fullname" . }}-exec-env
+  labels:
+    {{- include "ricochet.labels" . | nindent 4 }}
+    app.kubernetes.io/component: exec-env
+data:
+  ricochet-exec-env.toml: |
+{{ .Values.execEnv.config | indent 4 }}
+{{- end }}
