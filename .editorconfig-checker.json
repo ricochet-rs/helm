@@ -3,10 +3,7 @@
   "Debug": false,
   "IgnoreDefaults": false,
   "SpacesAftertabs": false,
-  "Exclude": [
-    "\\.git/",
-    "LICENSE"
-  ],
+  "Exclude": ["\\.git/", "LICENSE"],
   "AllowedContentTypes": [],
   "PassedFiles": [],
   "Disable": {
