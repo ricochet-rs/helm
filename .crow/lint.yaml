@@ -5,6 +5,9 @@ when:
       - ${CI_REPO_DEFAULT_BRANCH}
       - renovate/*
 
+labels:
+  type: static
+
 steps:
   lint-markdown:
     depends_on: []
