@@ -1,5 +1,5 @@
 # fullnameOverride -- The full name of the release (can be overridden)
-fullnameOverride: ''
+fullnameOverride: 'ricochet'
 
 # nameOverride -- The name of the release (can be overridden)
 nameOverride: ''
