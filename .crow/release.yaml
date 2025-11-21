@@ -1,0 +1,72 @@
+when:
+  - event: tag
+
+clone:
+  git:
+    image: codeberg.org/crow-plugins/clone:1.0.2
+    settings:
+      tags: true
+
+depends_on:
+  - lint
+
+steps:
+  release-chart:
+    environment:
+      PNPM_HOME: /usr/local/bin
+      HELM_DOCS_VERSION: v1.14.2 # renovate: datasource=github-releases depName=norwoodj/helm-docs
+      GITHUB_TOKEN:
+        from_secret: ricochet_issue_token
+    image: reg.ricochet.rs/docker.io/alpine/helm:3.19.0
+    commands:
+      # replace version in Chart.yaml
+      - "sed -i 's/^version: .*/version: ${CI_COMMIT_TAG#v}/' charts/*/Chart.yaml"
+      # update docs
+      - apk add -q --no-cache go pnpm
+      - go install github.com/norwoodj/helm-docs/cmd/helm-docs@$HELM_DOCS_VERSION
+      - ~/go/bin/helm-docs -x --skip-version-footer
+      - pnpm install -g prettier
+      - prettier -w .
+      # package
+      - helm dependency update charts/*
+      - helm package --version "${CI_COMMIT_TAG#v}" -d /tmp/ charts/*
+      # oci package - GitHub Container Registry (ghcr.io)
+      - echo "$GITHUB_TOKEN" | helm registry login ghcr.io --username ricochet-bot --password-stdin
+      - helm push /tmp/ricochet-helm-${CI_COMMIT_TAG#v}.tgz oci://ghcr.io/${CI_REPO_OWNER}
+
+  changelog:
+    image: reg.ricochet.rs/docker.io/thegeeklab/git-sv:2.0.5
+    commands:
+      - apk add --no-cache -q sed
+      - git sv current-version
+      - git sv release-notes -t ${CI_COMMIT_TAG} -o CHANGELOG.md
+      - sed -i '1,2d' CHANGELOG.md # remove version
+      - cat CHANGELOG.md
+    when:
+      event: tag
+
+  'Create release':
+    image: reg.ricochet.rs/docker.io/woodpeckerci/plugin-release:0.2.6
+    settings:
+      note: CHANGELOG.md
+      api_key:
+        from_secret: ricochet_issue_token
+      files:
+        - dist/*.tar.gz
+      title: ${CI_COMMIT_TAG}
+    when:
+      event: tag
+
+  'Push changes to repo':
+    image: reg.ricochet.rs/docker.io/appleboy/drone-git-push:1.1.1
+    settings:
+      remote: ${CI_REPO_CLONE_SSH_URL}
+      branch: main
+      commit: true
+      ssh_key:
+        from_secret: ricochet-bot-ssh-key
+      commit_message: '[skip ci] Update Chart assets after release'
+      commit_author: ricochet-bot
+      commit_author_email: droid@ricochet.rs
+    when:
+      - event: tag
