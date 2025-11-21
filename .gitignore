@@ -3,3 +3,4 @@ node_modules/
 unittests/*/__snapshot__/
 *.tgz
 CLAUDE.md
+CHANGELOG.md
