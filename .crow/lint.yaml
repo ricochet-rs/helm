@@ -6,7 +6,7 @@ when:
       - renovate/*
 
 labels:
-  type: static
+  group: ccx
 
 steps:
   lint-markdown:

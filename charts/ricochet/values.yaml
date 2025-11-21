@@ -46,6 +46,72 @@ image:
 imagePullSecrets: []
 # - name: myregistrykey
 
+apps:
+  deployment:
+    # apps.deployment.strategy -- Update strategy for app-spawned deployments
+    strategy:
+      # apps.deployment.strategy.type -- Strategy type (RollingUpdate or Recreate)
+      type: RollingUpdate
+      rollingUpdate:
+        # apps.deployment.strategy.rollingUpdate.maxSurge -- Maximum number of pods that can be created over the desired number of pods
+        maxSurge: 1
+        # apps.deployment.strategy.rollingUpdate.maxUnavailable -- Maximum number of pods that can be unavailable during the update process
+        maxUnavailable: 0
+    # apps.deployment.imagePullSecrets -- Image pull secrets for pods spawned by backend
+    # These will be injected into every pod spawned by the backend
+    imagePullSecrets: []
+    # - name: app-registry-key
+    # apps.deployment.imagePullPolicy -- Image pull policy for app-spawned pods
+    imagePullPolicy: IfNotPresent
+    # apps.deployment.persistence -- Persistence configuration for app-spawned pods
+    persistence:
+      content:
+        # apps.deployment.persistence.content.enabled -- Enable PVC for content (temporary per-pod mount)
+        enabled: false
+        # apps.deployment.persistence.content.storageClass -- Storage class for content PVC
+        storageClass: ''
+        # apps.deployment.persistence.content.accessMode -- Access mode for content PVC (ReadWriteOnce or ReadWriteMany)
+        accessMode: ReadWriteMany
+        # apps.deployment.persistence.content.size -- Size of the content PVC
+        size: 10Gi
+        # apps.deployment.persistence.content.mountPath -- Mount path for content volume in spawned pods
+        mountPath: /opt/ricochet/data/content
+        # apps.deployment.persistence.content.annotations -- Annotations for the content PVC
+        annotations: {}
+        # apps.deployment.persistence.content.existingClaim -- Use an existing PVC for content
+        existingClaim: ''
+      cache:
+        # apps.deployment.persistence.cache.enabled -- Enable shared PVC for cache across all app pods
+        enabled: false
+        # apps.deployment.persistence.cache.storageClass -- Storage class for cache PVC
+        storageClass: ''
+        # apps.deployment.persistence.cache.accessMode -- Access mode for cache PVC (ReadWriteOnce or ReadWriteMany)
+        accessMode: ReadWriteMany
+        # apps.deployment.persistence.cache.size -- Size of the shared cache PVC
+        size: 20Gi
+        # apps.deployment.persistence.cache.mountPath -- Mount path for cache volume in spawned pods
+        mountPath: /opt/ricochet/cache
+        # apps.deployment.persistence.cache.annotations -- Annotations for the cache PVC
+        annotations: {}
+        # apps.deployment.persistence.cache.existingClaim -- Use an existing PVC for shared cache
+        existingClaim: ''
+
+execEnv:
+  # execEnv.config -- Execution environment configuration (TOML format)
+  # Defines available container images for different language runtimes
+  # This will be mounted at /opt/ricochet/data/ricochet-exec-env.toml
+  config: ''
+  # Example:
+  # config: |
+  #   [[image.r-default]]
+  #   image = "reg.ricochet.rs/ricochet/exec-env-r:4.5-alpine"
+  #   os = "alpine-3.22"
+  #   description = "Default Ricochet runner with R support"
+  #   arch = ["linux/amd64", "linux/arm64"]
+  #   r = [
+  #     { version = "4.5.1", bin = "/opt/R/4.5.1/bin/R" },
+  #   ]
+
 service:
   # service.type -- Service type
   type: ClusterIP
@@ -172,21 +238,6 @@ readinessProbe:
 
 # persistence -- Persistence configuration for multiple volumes
 persistence:
-  cache:
-    # persistence.cache.enabled -- Enable persistent volume for cache
-    enabled: false
-    # persistence.cache.storageClass -- Storage class for the cache PVC (use '-' for default)
-    storageClass: ''
-    # persistence.cache.accessMode -- Access mode for the cache PVC
-    accessMode: ReadWriteOnce
-    # persistence.cache.size -- Size of the cache PVC
-    size: 10Gi
-    # persistence.cache.mountPath -- Mount path for the cache volume
-    mountPath: /opt/ricochet/renv/cache
-    # persistence.cache.annotations -- Annotations for the cache PVC
-    annotations: {}
-    # persistence.cache.existingClaim -- Use an existing PVC for cache
-    existingClaim: ''
   home:
     # persistence.home.enabled -- Enable persistent volume for home
     enabled: false
@@ -214,9 +265,9 @@ serviceAccount:
 
 # rbac -- RBAC configuration
 rbac:
-  # rbac.create -- Create RBAC resources
-  create: false
-  # rbac.rules -- Custom RBAC rules
+  # rbac.create -- Create RBAC resources (required for launcher to spawn pods)
+  create: true
+  # rbac.rules -- Custom RBAC rules (leave empty to use default launcher permissions)
   rules: []
 
 # config -- Ricochet TOML configuration

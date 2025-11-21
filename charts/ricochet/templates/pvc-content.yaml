@@ -1,0 +1,25 @@
+{{- if and .Values.apps.deployment.persistence.content.enabled (not .Values.apps.deployment.persistence.content.existingClaim) -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ricochet.fullname" . }}-apps-content
+  labels:
+    {{- include "ricochet.labels" . | nindent 4 }}
+  {{- with .Values.apps.deployment.persistence.content.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.apps.deployment.persistence.content.accessMode }}
+  {{- if .Values.apps.deployment.persistence.content.storageClass }}
+  {{- if eq .Values.apps.deployment.persistence.content.storageClass "-" }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.apps.deployment.persistence.content.storageClass | quote }}
+  {{- end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.apps.deployment.persistence.content.size }}
+{{- end }}
