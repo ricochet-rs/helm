@@ -13,7 +13,7 @@ replicaCount: 1
 # strategy -- Deployment strategy configuration
 strategy:
   # strategy.type -- Deployment strategy type (RollingUpdate or Recreate)
-  type: RollingUpdate
+  type: Recreate
   rollingUpdate:
     # strategy.rollingUpdate.maxSurge -- Maximum number of pods that can be created over the desired number of pods
     maxSurge: 1
