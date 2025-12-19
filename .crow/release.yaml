@@ -22,7 +22,7 @@ steps:
         from_secret: ricochet_issue_token
       RICOCHET_REGISTRY_TOKEN:
         from_secret: ricochet_registry_token
-    image: reg.ricochet.rs/docker.io/alpine/helm:3.19.0
+    image: reg.ricochet.rs/docker.io/alpine/helm:4.0.1
     commands:
       # replace version in Chart.yaml
       - "sed -i 's/^version: .*/version: ${CI_COMMIT_TAG#v}/' charts/*/Chart.yaml"
@@ -39,8 +39,8 @@ steps:
       - echo "$GITHUB_TOKEN" | helm registry login ghcr.io --username ricochet-bot --password-stdin
       - helm push /tmp/ricochet-helm-${CI_COMMIT_TAG#v}.tgz oci://ghcr.io/${CI_REPO_OWNER}
       # oci package (reg.ricochet.rs)
-      - echo "$RICOCHET_REGISTRY_TOKEN" | helm registry login reg.ricochet.rs --username robot$ricochet --password-stdin
-      - helm push /tmp/ricochet-helm-${CI_COMMIT_TAG#v}.tgz oci://reg.ricochet.rs/ricochet/helm
+      - echo "$RICOCHET_REGISTRY_TOKEN" | helm registry login reg.ricochet.rs --username 'robot$ricochet' --password-stdin
+      - helm push /tmp/ricochet-helm-${CI_COMMIT_TAG#v}.tgz oci://reg.ricochet.rs/ricochet
 
   changelog:
     image: reg.ricochet.rs/docker.io/thegeeklab/git-sv:2.0.5
