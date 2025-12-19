@@ -3,7 +3,7 @@ version: '1.1' # Configuration version.
 versioning:
   update-major: [breaking] # Commit types used to bump major.
   update-minor: [feat, perf] # Commit types used to bump minor.
-  update-patch: [build, ci, chore, fix, perf, refactor, test] # Commit types used to bump patch.
+  update-patch: [build, ci, chore, fix, perf, enh, refactor, test] # Commit types used to bump patch.
   # When type is not present on update rules and is unknown (not mapped on commit message types);
   # if ignore-unknown=false bump patch, if ignore-unknown=true do not bump version.
   ignore-unknown: false
@@ -19,6 +19,9 @@ release-notes:
     - name: Features # Name used on section.
       section-type: commits # Type of the section, supported types: commits, breaking-changes.
       commit-types: [feat, perf] # Commit types for commit section-type, one commit type cannot be in more than one section.
+    - name: Enhancements
+      section-type: commits
+      commit-types: [enh]
     - name: Bug Fixes
       section-type: commits
       commit-types: [fix]
@@ -41,7 +44,7 @@ branches: # Git branches config.
 
 commit-message:
   # Supported commit types.
-  types: [build, ci, chore, docs, feat, fix, perf, refactor, revert, style, test]
+  types: [build, ci, chore, docs, feat, enh, fix, perf, refactor, revert, style, test]
   header-selector: '' # You can put in a regex here to select only a certain part of the commit message. Please define a regex group 'header'.
   scope:
     # Define supported scopes, if blank, scope will not be validated, if not, only scope listed will be valid.
