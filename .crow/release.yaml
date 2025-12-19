@@ -20,6 +20,8 @@ steps:
       HELM_DOCS_VERSION: v1.14.2 # renovate: datasource=github-releases depName=norwoodj/helm-docs
       GITHUB_TOKEN:
         from_secret: ricochet_issue_token
+      RICOCHET_REGISTRY_TOKEN:
+        from_secret: ricochet_registry_token
     image: reg.ricochet.rs/docker.io/alpine/helm:3.19.0
     commands:
       # replace version in Chart.yaml
@@ -36,6 +38,9 @@ steps:
       # oci package - GitHub Container Registry (ghcr.io)
       - echo "$GITHUB_TOKEN" | helm registry login ghcr.io --username ricochet-bot --password-stdin
       - helm push /tmp/ricochet-helm-${CI_COMMIT_TAG#v}.tgz oci://ghcr.io/${CI_REPO_OWNER}
+      # oci package (reg.ricochet.rs)
+      - echo "$RICOCHET_REGISTRY_TOKEN" | helm registry login reg.ricochet.rs --username robot$ricochet --password-stdin
+      - helm push /tmp/ricochet-helm-${CI_COMMIT_TAG#v}.tgz oci://reg.ricochet.rs/ricochet/helm
 
   changelog:
     image: reg.ricochet.rs/docker.io/thegeeklab/git-sv:2.0.5
