@@ -7,6 +7,9 @@ clone:
     settings:
       tags: true
 
+labels:
+  group: ccx
+
 depends_on:
   - lint
 
