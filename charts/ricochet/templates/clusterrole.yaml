@@ -1,0 +1,14 @@
+{{- if and .Values.rbac.create .Values.rbac.clusterRole.enabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "ricochet.fullname" . }}
+  labels:
+    {{- include "ricochet.labels" . | nindent 4 }}
+rules:
+  # Required for multi-arch cluster support: query node architectures
+  # to spawn dependency jobs on each architecture
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+{{- end }}
