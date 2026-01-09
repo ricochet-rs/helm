@@ -75,7 +75,7 @@ apps:
         # apps.deployment.persistence.content.size -- Size of the content PVC
         size: 10Gi
         # apps.deployment.persistence.content.mountPath -- Mount path for content volume in spawned pods
-        mountPath: /opt/ricochet/data/content
+        mountPath: /var/lib/ricochet/data/content
         # apps.deployment.persistence.content.annotations -- Annotations for the content PVC
         annotations: {}
         # apps.deployment.persistence.content.existingClaim -- Use an existing PVC for content
@@ -91,7 +91,7 @@ apps:
         size: 20Gi
         # apps.deployment.persistence.cache.mountPath -- Mount path for cache volume in spawned pods
         # Should be {RICOCHET_HOME}/.cache to match local execution paths
-        mountPath: /opt/ricochet/data/.cache
+        mountPath: /var/lib/ricochet/data/.cache
         # apps.deployment.persistence.cache.annotations -- Annotations for the cache PVC
         annotations: {}
         # apps.deployment.persistence.cache.existingClaim -- Use an existing PVC for shared cache
@@ -100,7 +100,7 @@ apps:
 execEnv:
   # execEnv.config -- Execution environment configuration (TOML format)
   # Defines available container images for different language runtimes
-  # This will be mounted at /opt/ricochet/data/ricochet-exec-env.toml
+  # This will be mounted at /var/lib/ricochet/data/ricochet-exec-env.toml
   config: ''
   # Example:
   # config: |
@@ -249,7 +249,7 @@ persistence:
     # persistence.home.size -- Size of the home PVC
     size: 25Gi
     # persistence.home.mountPath -- Mount path for the home volume
-    mountPath: /opt/ricochet/data
+    mountPath: /var/lib/ricochet/data
     # persistence.home.annotations -- Annotations for the home PVC
     annotations: {}
     # persistence.home.existingClaim -- Use an existing PVC for home
@@ -270,6 +270,11 @@ rbac:
   create: true
   # rbac.rules -- Custom RBAC rules (leave empty to use default launcher permissions)
   rules: []
+  # rbac.clusterRole -- Cluster-scoped RBAC for multi-arch support
+  clusterRole:
+    # rbac.clusterRole.enabled -- Enable ClusterRole for listing nodes (required for multi-arch clusters)
+    # When enabled, allows querying node architectures to spawn dependency jobs on each arch
+    enabled: false
 
 # config -- Ricochet TOML configuration
 # Define arbitrary TOML sections with key-value pairs

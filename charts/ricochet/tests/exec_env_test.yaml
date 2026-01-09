@@ -161,7 +161,7 @@ tests:
           path: spec.template.spec.containers[0].volumeMounts
           content:
             name: exec-env-config
-            mountPath: /opt/ricochet/data/ricochet-exec-env.toml
+            mountPath: /var/lib/ricochet/data/ricochet-exec-env.toml
             subPath: ricochet-exec-env.toml
             readOnly: true
         template: deployment.yaml

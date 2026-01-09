@@ -166,7 +166,7 @@ tests:
           path: spec.template.spec.initContainers[1].volumeMounts
           content:
             name: home-storage
-            mountPath: /opt/ricochet/data
+            mountPath: /var/lib/ricochet/data
         template: deployment.yaml
 
   # Test 5: Edge case - config with only special keys

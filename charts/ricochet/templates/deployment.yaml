@@ -69,13 +69,13 @@ spec:
           args:
             - |
               # Create config directory
-              mkdir -p /opt/ricochet/data
+              mkdir -p /var/lib/ricochet/data
 
               # Start with base config
               if [ -f /config/ricochet-config.toml ]; then
-                cp /config/ricochet-config.toml /opt/ricochet/data/ricochet-config.toml
+                cp /config/ricochet-config.toml /var/lib/ricochet/data/ricochet-config.toml
               else
-                touch /opt/ricochet/data/ricochet-config.toml
+                touch /var/lib/ricochet/data/ricochet-config.toml
               fi
 
               {{- if .Values.config.secrets }}
@@ -90,14 +90,14 @@ spec:
               if [ -n "$SECRET_VALUE" ]; then
                 # Check if section exists
                 ESCAPED_SECTION=$(echo "{{ $section }}" | sed 's/\./\\./g')
-                if grep -q "^\[$ESCAPED_SECTION\]" /opt/ricochet/data/ricochet-config.toml; then
+                if grep -q "^\[$ESCAPED_SECTION\]" /var/lib/ricochet/data/ricochet-config.toml; then
                   # Section exists - append key after the section header
-                  sed -i "/^\[$ESCAPED_SECTION\]/a {{ $key }} = \"$SECRET_VALUE\"" /opt/ricochet/data/ricochet-config.toml
+                  sed -i "/^\[$ESCAPED_SECTION\]/a {{ $key }} = \"$SECRET_VALUE\"" /var/lib/ricochet/data/ricochet-config.toml
                 else
                   # Section doesn't exist - create it
-                  echo "" >> /opt/ricochet/data/ricochet-config.toml
-                  echo "[{{ $section }}]" >> /opt/ricochet/data/ricochet-config.toml
-                  echo '{{ $key }} = "'$SECRET_VALUE'"' >> /opt/ricochet/data/ricochet-config.toml
+                  echo "" >> /var/lib/ricochet/data/ricochet-config.toml
+                  echo "[{{ $section }}]" >> /var/lib/ricochet/data/ricochet-config.toml
+                  echo '{{ $key }} = "'$SECRET_VALUE'"' >> /var/lib/ricochet/data/ricochet-config.toml
                 fi
               fi
               {{- end }}
@@ -107,14 +107,14 @@ spec:
               if [ -n "$SECRET_VALUE" ]; then
                 # Check if section exists
                 ESCAPED_SECTION=$(echo "{{ $section }}" | sed 's/\./\\./g')
-                if grep -q "^\[$ESCAPED_SECTION\]" /opt/ricochet/data/ricochet-config.toml; then
+                if grep -q "^\[$ESCAPED_SECTION\]" /var/lib/ricochet/data/ricochet-config.toml; then
                   # Section exists - append key after the section header
-                  sed -i "/^\[$ESCAPED_SECTION\]/a {{ $key }} = \"$SECRET_VALUE\"" /opt/ricochet/data/ricochet-config.toml
+                  sed -i "/^\[$ESCAPED_SECTION\]/a {{ $key }} = \"$SECRET_VALUE\"" /var/lib/ricochet/data/ricochet-config.toml
                 else
                   # Section doesn't exist - create it
-                  echo "" >> /opt/ricochet/data/ricochet-config.toml
-                  echo "[{{ $section }}]" >> /opt/ricochet/data/ricochet-config.toml
-                  echo '{{ $key }} = "'$SECRET_VALUE'"' >> /opt/ricochet/data/ricochet-config.toml
+                  echo "" >> /var/lib/ricochet/data/ricochet-config.toml
+                  echo "[{{ $section }}]" >> /var/lib/ricochet/data/ricochet-config.toml
+                  echo '{{ $key }} = "'$SECRET_VALUE'"' >> /var/lib/ricochet/data/ricochet-config.toml
                 fi
               fi
               {{- end }}
@@ -123,7 +123,7 @@ spec:
               {{- end }}
 
               # Set proper permissions
-              chown -R 1000:1000 /opt/ricochet/data
+              chown -R 1000:1000 /var/lib/ricochet/data
           securityContext:
             runAsUser: 0
             runAsNonRoot: false
@@ -155,7 +155,7 @@ spec:
               mountPath: {{ .Values.persistence.home.mountPath }}
             {{- else }}
             - name: config-merged
-              mountPath: /opt/ricochet/data
+              mountPath: /var/lib/ricochet/data
             {{- end }}
         {{- end }}
         {{- with .Values.initContainers }}
@@ -198,11 +198,11 @@ spec:
               mountPath: {{ .Values.persistence.home.mountPath }}
             {{- else if ne (len .Values.config) 0 }}
             - name: config-merged
-              mountPath: /opt/ricochet/data
+              mountPath: /var/lib/ricochet/data
             {{- end }}
             {{- if .Values.execEnv.config }}
             - name: exec-env-config
-              mountPath: /opt/ricochet/data/ricochet-exec-env.toml
+              mountPath: /var/lib/ricochet/data/ricochet-exec-env.toml
               subPath: ricochet-exec-env.toml
               readOnly: true
             {{- end }}
