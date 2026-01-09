@@ -90,7 +90,8 @@ apps:
         # apps.deployment.persistence.cache.size -- Size of the shared cache PVC
         size: 20Gi
         # apps.deployment.persistence.cache.mountPath -- Mount path for cache volume in spawned pods
-        mountPath: /opt/ricochet/cache
+        # Should be {RICOCHET_HOME}/.cache to match local execution paths
+        mountPath: /opt/ricochet/data/.cache
         # apps.deployment.persistence.cache.annotations -- Annotations for the cache PVC
         annotations: {}
         # apps.deployment.persistence.cache.existingClaim -- Use an existing PVC for shared cache
