@@ -5,7 +5,7 @@
 ## Installation
 
 ```sh
-helm install ricochet oci://ghcr.io/ricochet-rs/helm
+helm install ricochet oci://ghcr.io/ricochet-rs/ricochet-helm
 ```
 
 The installation and configuration instructions can be found in [the ricochet documentation](https://docs.ricochet.rs/admin/installation/4-helm/index.html).
