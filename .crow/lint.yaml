@@ -11,22 +11,22 @@ labels:
 steps:
   lint-markdown:
     depends_on: []
-    image: reg.ricochet.rs/docker.io/davidanson/markdownlint-cli2:v0.19.0
+    image: reg.ricochet.rs/docker.io/davidanson/markdownlint-cli2:v0.20.0
     commands:
       - 'markdownlint-cli2 *.{md,markdown}'
     when:
       path: '*.{md,markdown}'
 
   editor-config:
-    image: reg.ricochet.rs/docker.io/mstruebing/editorconfig-checker:v3.5.0
+    image: reg.ricochet.rs/docker.io/mstruebing/editorconfig-checker:v3.6.0
     depends_on: []
 
   prettier:
-    image: reg.ricochet.rs/docker.io/woodpeckerci/plugin-prettier:1.4.0
+    image: reg.ricochet.rs/docker.io/woodpeckerci/plugin-prettier:1.4.1
     depends_on: []
 
   helm-lint:
-    image: reg.ricochet.rs/docker.io/alpine/helm:3.19.0
+    image: reg.ricochet.rs/docker.io/alpine/helm:3.20.0
     depends_on: []
     commands:
       - helm dependency update charts/*
