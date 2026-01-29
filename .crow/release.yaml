@@ -72,9 +72,9 @@ steps:
       branch: main
       commit: true
       ssh_key:
-        from_secret: ricochet-bot-ssh-key
+        from_secret: ricochet-bot-deploy-key-helm
       commit_message: '[skip ci] Update Chart assets after release'
-      commit_author: ricochet-bot
-      commit_author_email: droid@ricochet.rs
+      author_name: ricochet-bot
+      author_email: droid@ricochet.rs
     when:
       - event: tag
