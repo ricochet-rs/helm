@@ -1,11 +1,11 @@
 # ricochet-helm
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: latest](https://img.shields.io/badge/AppVersion-latest-informational?style=flat-square)
+![Version: 0.3.1](https://img.shields.io/badge/Version-0.3.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.1](https://img.shields.io/badge/AppVersion-0.1.1-informational?style=flat-square)
 
 ## Installation
 
 ```sh
-helm install ricochet oci://ghcr.io/ricochet-rs/ricochet-helm
+helm install ricochet oci://ghcr.io/ricochet-rs/helm
 ```
 
 The installation and configuration instructions can be found in [the ricochet documentation](https://docs.ricochet.rs/admin/installation/4-helm/index.html).
