@@ -220,7 +220,7 @@ spec:
         {{- with .Values.sidecarContainers }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- if .Values.jaeger.enabled }}
+        {{- if .Values.telemetry.jaeger.enabled }}
         - name: jaeger
           image: {{ .Values.telemetry.jaeger.image }}
           env:
