@@ -8,7 +8,7 @@ clone:
       tags: true
 
 labels:
-  group: ccx
+  agent: thumper
 
 depends_on:
   - lint
