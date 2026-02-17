@@ -79,6 +79,12 @@ data:
     {{- end }}
     {{- end }}
 
+    {{- if and .Values.telemetry.jaeger.enabled (not (index .Values.config "otel")) }}
+
+    [otel]
+    endpoint = "http://localhost:4317"
+    {{- end }}
+
     {{- with .Values.config.custom }}
     # Custom configuration
     {{- . | nindent 4 }}
