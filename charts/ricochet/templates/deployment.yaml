@@ -222,7 +222,7 @@ spec:
         {{- end }}
         {{- if .Values.jaeger.enabled }}
         - name: jaeger
-          image: {{ .Values.jaeger.image }}
+          image: {{ .Values.telemetry.jaeger.image }}
           env:
             - name: COLLECTOR_OTLP_ENABLED
               value: "true"
@@ -233,7 +233,7 @@ spec:
             - name: jaeger-ui
               containerPort: 16686
               protocol: TCP
-          {{- with .Values.jaeger.resources }}
+          {{- with .Values.telemetry.jaeger.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}

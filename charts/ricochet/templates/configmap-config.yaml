@@ -79,7 +79,7 @@ data:
     {{- end }}
     {{- end }}
 
-    {{- if and .Values.jaeger.enabled (not (index .Values.config "otel")) }}
+    {{- if and .Values.telemtry.jaeger.enabled (not (index .Values.config "otel")) }}
 
     [otel]
     endpoint = "http://localhost:4317"
