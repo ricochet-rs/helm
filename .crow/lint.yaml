@@ -11,14 +11,14 @@ labels:
 steps:
   lint-markdown:
     depends_on: []
-    image: reg.ricochet.rs/docker.io/davidanson/markdownlint-cli2:v0.20.0
+    image: reg.ricochet.rs/docker.io/davidanson/markdownlint-cli2:v0.21.0
     commands:
       - 'markdownlint-cli2 *.{md,markdown}'
     when:
       path: '*.{md,markdown}'
 
   editor-config:
-    image: reg.ricochet.rs/docker.io/mstruebing/editorconfig-checker:v3.6.0
+    image: reg.ricochet.rs/docker.io/mstruebing/editorconfig-checker:v3.6.1
     depends_on: []
 
   prettier:
