@@ -26,7 +26,7 @@ steps:
     depends_on: []
 
   helm-lint:
-    image: reg.ricochet.rs/docker.io/alpine/helm:3.20.0
+    image: reg.ricochet.rs/docker.io/alpine/helm:4.1.1
     depends_on: []
     commands:
       - helm dependency update charts/*
