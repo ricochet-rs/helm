@@ -22,7 +22,7 @@ steps:
         from_secret: ricochet_issue_token
       RICOCHET_REGISTRY_TOKEN:
         from_secret: ricochet_registry_token
-    image: reg.ricochet.rs/docker.io/alpine/helm:4.1.0
+    image: reg.ricochet.rs/docker.io/alpine/helm:4.1.3
     commands:
       # replace version in Chart.yaml
       - "sed -i 's/^version: .*/version: ${CI_COMMIT_TAG#v}/' charts/*/Chart.yaml"
@@ -43,7 +43,7 @@ steps:
       - helm push /tmp/ricochet-helm-${CI_COMMIT_TAG#v}.tgz oci://reg.ricochet.rs/ricochet
 
   changelog:
-    image: reg.ricochet.rs/docker.io/thegeeklab/git-sv:2.0.9
+    image: reg.ricochet.rs/docker.io/thegeeklab/git-sv:2.0.10
     commands:
       - apk add --no-cache -q sed
       - git sv current-version
@@ -54,7 +54,7 @@ steps:
       event: tag
 
   'Create release':
-    image: reg.ricochet.rs/docker.io/woodpeckerci/plugin-release:0.2.6
+    image: reg.ricochet.rs/docker.io/woodpeckerci/plugin-release:0.3.0
     settings:
       note: CHANGELOG.md
       api_key:
@@ -66,7 +66,7 @@ steps:
       event: tag
 
   'Push changes to repo':
-    image: reg.ricochet.rs/docker.io/appleboy/drone-git-push:1.2.1
+    image: reg.ricochet.rs/docker.io/appleboy/drone-git-push:1.2.2
     settings:
       remote: ${CI_REPO_CLONE_SSH_URL}
       branch: main
