@@ -311,17 +311,24 @@ initContainers: []
 # sidecarContainers -- Sidecar containers
 sidecarContainers: []
 
-# jaeger -- Optional Jaeger all-in-one sidecar for local OTLP trace collection
+# jaeger -- Optional Jaeger v2 sidecar for local OTLP trace collection
 telemetry:
   jaeger:
-    # jaeger.enabled -- Enable the Jaeger all-in-one sidecar container.
+    # jaeger.enabled -- Enable the Jaeger v2 sidecar container.
     # When enabled, also injects [otel] endpoint = "http://localhost:4317" into
     # ricochet-config.toml unless config.'otel' is already set.
     enabled: false
-    # jaeger.image -- Jaeger all-in-one image to use (avoid latest in production)
-    image: jaegertracing/all-in-one:1.62.0
+    # jaeger.image -- Jaeger v2 image to use (avoid latest in production)
+    image: jaegertracing/jaeger:2.15.1
     # jaeger.resources -- Resource requests/limits for the Jaeger sidecar
-    resources: {}
+    resources:
+      requests:
+        cpu: 10m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    # jaeger.initImage -- Busybox image used by the init container to write the Jaeger config
+    initImage: busybox:1.37
 
 # networkPolicy -- Network policy configuration
 networkPolicy:
