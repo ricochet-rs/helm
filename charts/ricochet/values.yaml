@@ -321,12 +321,7 @@ telemetry:
     # jaeger.image -- Jaeger v2 image to use (avoid latest in production)
     image: jaegertracing/jaeger:2.15.1
     # jaeger.resources -- Resource requests/limits for the Jaeger sidecar
-    resources:
-      requests:
-        cpu: 10m
-        memory: 128Mi
-      limits:
-        memory: 256Mi
+    resources: {}
     # jaeger.initImage -- Busybox image used by the init container to write the Jaeger config
     initImage: busybox:1.37
 
