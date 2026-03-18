@@ -2,8 +2,8 @@ apiVersion: v2
 name: ricochet-helm
 description: A Helm chart for deploying Ricochet server
 type: application
-version: 0.3.6
-appVersion: 0.3.0
+version: 0.3.7
+appVersion: 0.4.0
 icon: https://ricochet.rs/logo.png
 keywords:
   - ricochet
