@@ -305,6 +305,10 @@ extraVolumeMounts: []
 #   mountPath: /etc/extra
 #   readOnly: true
 
+# busyboxImage -- Busybox image used by built-in init containers (fix-permissions, merge-config)
+# renovate: image
+busyboxImage: busybox:1.37
+
 # initContainers -- Additional init containers
 initContainers: []
 
@@ -319,10 +323,12 @@ telemetry:
     # ricochet-config.toml unless config.'otel' is already set.
     enabled: false
     # jaeger.image -- Jaeger v2 image to use (avoid latest in production)
+    # renovate: image
     image: jaegertracing/jaeger:2.15.1
     # jaeger.resources -- Resource requests/limits for the Jaeger sidecar
     resources: {}
     # jaeger.initImage -- Busybox image used by the init container to write the Jaeger config
+    # renovate: image
     initImage: busybox:1.37
 
 # networkPolicy -- Network policy configuration
