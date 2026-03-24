@@ -11,7 +11,7 @@ labels:
 steps:
   lint-markdown:
     depends_on: []
-    image: reg.ricochet.rs/docker.io/davidanson/markdownlint-cli2:v0.21.0
+    image: reg.ricochet.rs/docker.io/davidanson/markdownlint-cli2:v0.22.0
     commands:
       - 'markdownlint-cli2 *.{md,markdown}'
     when:
