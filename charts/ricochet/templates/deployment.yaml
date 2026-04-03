@@ -43,11 +43,11 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- end }}
-      {{- if or .Values.initContainers .Values.persistence.home.enabled (ne (len .Values.config) 0) }}
+      {{- if or .Values.initContainers .Values.persistence.home.enabled (ne (len .Values.config) 0) .Values.telemetry.jaeger.enabled }}
       initContainers:
         {{- if .Values.persistence.home.enabled }}
         - name: fix-permissions
-          image: busybox:1.37
+          image: {{ .Values.busyboxImage }}
           command: ['sh', '-c']
           args:
             - |
@@ -64,7 +64,7 @@ spec:
         {{- end }}
         {{- if ne (len .Values.config) 0 }}
         - name: merge-config
-          image: busybox:1.37
+          image: {{ .Values.busyboxImage }}
           command: ['sh', '-c']
           args:
             - |
@@ -161,6 +161,45 @@ spec:
         {{- with .Values.initContainers }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+        {{- if .Values.telemetry.jaeger.enabled }}
+        - name: jaeger-config-init
+          image: {{ .Values.telemetry.jaeger.initImage }}
+          command:
+            - sh
+            - -c
+            - |
+              cat > /etc/jaeger/config.yaml << 'EOCFG'
+              extensions:
+                jaeger_storage:
+                  backends:
+                    memstore:
+                      memory:
+                        max_traces: 1000
+                jaeger_query:
+                  storage:
+                    traces: memstore
+
+              receivers:
+                otlp:
+                  protocols:
+                    grpc:
+                      endpoint: 0.0.0.0:4317
+
+              exporters:
+                jaeger_storage_exporter:
+                  trace_storage: memstore
+
+              service:
+                extensions: [jaeger_storage, jaeger_query]
+                pipelines:
+                  traces:
+                    receivers: [otlp]
+                    exporters: [jaeger_storage_exporter]
+              EOCFG
+          volumeMounts:
+            - name: jaeger-config
+              mountPath: /etc/jaeger
+        {{- end }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -220,6 +259,27 @@ spec:
         {{- with .Values.sidecarContainers }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+        {{- if .Values.telemetry.jaeger.enabled }}
+        - name: jaeger
+          image: {{ .Values.telemetry.jaeger.image }}
+          args:
+            - --config
+            - /etc/jaeger/config.yaml
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: jaeger-ui
+              containerPort: 16686
+              protocol: TCP
+          {{- with .Values.telemetry.jaeger.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: jaeger-config
+              mountPath: /etc/jaeger
+        {{- end }}
       volumes:
         {{- if .Values.persistence.home.enabled }}
         - name: home-storage
@@ -271,6 +331,10 @@ spec:
         {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.telemetry.jaeger.enabled }}
+        - name: jaeger-config
+          emptyDir: {}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

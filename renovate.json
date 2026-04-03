@@ -1,4 +1,19 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>ricochet-rs/renovate-config"]
+  "extends": ["github>ricochet-rs/renovate-config"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["charts/.+/values\\.yaml$"],
+      "matchStrings": ["#\\s*renovate:\\s*image\\n\\s+\\w+:\\s*(?<depName>[^:]+):(?<currentValue>.+)"],
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["custom.regex"],
+      "matchFileNames": ["charts/**/values.yaml"],
+      "schedule": ["on the first day of the month"]
+    }
+  ]
 }
