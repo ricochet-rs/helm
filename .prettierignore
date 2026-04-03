@@ -5,3 +5,4 @@ pnpm-lock.yaml
 tmpcharts-*/
 # won't work
 charts/ricochet/templates/**/*.yaml
+renovate.json
