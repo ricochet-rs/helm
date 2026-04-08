@@ -46,15 +46,6 @@ image:
 imagePullSecrets: []
 # - name: myregistrykey
 
-# initContainerImage -- Image used for init containers (fix-permissions, merge-config)
-initContainerImage:
-  # initContainerImage.registry -- Registry for the init container image
-  registry: docker.io
-  # initContainerImage.repository -- Repository for the init container image
-  repository: busybox
-  # initContainerImage.tag -- Tag for the init container image
-  tag: '1.37'
-
 apps:
   deployment:
     # apps.deployment.strategy -- Update strategy for app-spawned deployments
@@ -207,24 +198,22 @@ podAnnotations: {}
 podLabels: {}
 
 # podSecurityContext -- Security context for pods
-podSecurityContext:
-  fsGroup: 1000
-  runAsNonRoot: true
-  runAsUser: 1000
-  runAsGroup: 1000
-  seccompProfile:
-    type: RuntimeDefault
+podSecurityContext: {}
+  # fsGroup: 1000
+  # runAsNonRoot: true
+  # runAsUser: 1000
+  # runAsGroup: 1000
 
 # securityContext -- Security context for containers
-securityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
-  readOnlyRootFilesystem: false
-  runAsNonRoot: true
-  runAsUser: 1000
-  runAsGroup: 1000
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #     - ALL
+  # readOnlyRootFilesystem: false
+  # allowPrivilegeEscalation: false
+  # runAsNonRoot: true
+  # runAsUser: 1000
+  # runAsGroup: 1000
 
 # livenessProbe -- Liveness probe configuration
 livenessProbe:
@@ -316,6 +305,10 @@ extraVolumeMounts: []
 #   mountPath: /etc/extra
 #   readOnly: true
 
+# busyboxImage -- Busybox image used by built-in init containers (fix-permissions, merge-config)
+# renovate: image
+busyboxImage: busybox:1.37
+
 # initContainers -- Additional init containers
 initContainers: []
 
@@ -337,45 +330,6 @@ telemetry:
     # jaeger.initImage -- Busybox image used by the init container to write the Jaeger config
     # renovate: image
     initImage: busybox:1.37
-
-# openshift -- OpenShift-specific configuration
-openshift:
-  # openshift.route -- OpenShift Route configuration
-  route:
-    # openshift.route.enabled -- Enable OpenShift Route resource
-    enabled: false
-    # openshift.route.host -- Hostname for the Route (leave empty for auto-generated)
-    host: ''
-    # openshift.route.path -- Path for the Route
-    path: /
-    # openshift.route.annotations -- Annotations for the Route
-    annotations: {}
-    # openshift.route.labels -- Additional labels for the Route
-    labels: {}
-    # openshift.route.tls -- TLS configuration for the Route
-    tls:
-      # openshift.route.tls.enabled -- Enable TLS on the Route
-      enabled: true
-      # openshift.route.tls.termination -- TLS termination type (edge, reencrypt, passthrough)
-      termination: edge
-      # openshift.route.tls.insecureEdgeTerminationPolicy -- Policy for insecure traffic (Allow, Redirect, None)
-      insecureEdgeTerminationPolicy: Redirect
-      # openshift.route.tls.certificate -- TLS certificate (PEM format, optional - use with edge/reencrypt)
-      certificate: ''
-      # openshift.route.tls.key -- TLS private key (PEM format, optional - use with edge/reencrypt)
-      key: ''
-      # openshift.route.tls.caCertificate -- CA certificate (PEM format, optional)
-      caCertificate: ''
-      # openshift.route.tls.destinationCACertificate -- Destination CA certificate (PEM format, optional - use with reencrypt)
-      destinationCACertificate: ''
-    # openshift.route.wildcardPolicy -- Wildcard policy (None or Subdomain)
-    wildcardPolicy: None
-  # openshift.scc -- Security Context Constraints configuration
-  scc:
-    # openshift.scc.annotate -- Annotate the ServiceAccount with the SCC name
-    annotate: false
-    # openshift.scc.name -- Name of the SCC to annotate on the ServiceAccount
-    name: nonroot-v2
 
 # networkPolicy -- Network policy configuration
 networkPolicy:

@@ -77,13 +77,3 @@ Return the proper image pull policy
 {{- define "ricochet.imagePullPolicy" -}}
 {{- .Values.image.pullPolicy | default "IfNotPresent" -}}
 {{- end }}
-
-{{/*
-Return the init container image name
-*/}}
-{{- define "ricochet.initContainerImage" -}}
-{{- $registry := .Values.initContainerImage.registry -}}
-{{- $repository := .Values.initContainerImage.repository -}}
-{{- $tag := .Values.initContainerImage.tag -}}
-{{- printf "%s/%s:%s" $registry $repository $tag -}}
-{{- end }}
