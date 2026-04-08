@@ -1,0 +1,50 @@
+{{- if .Values.openshift.route.enabled -}}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ include "ricochet.fullname" . }}
+  labels:
+    {{- include "ricochet.labels" . | nindent 4 }}
+    {{- with .Values.openshift.route.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.openshift.route.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.openshift.route.host }}
+  host: {{ .Values.openshift.route.host | quote }}
+  {{- end }}
+  path: {{ .Values.openshift.route.path }}
+  to:
+    kind: Service
+    name: {{ include "ricochet.fullname" . }}
+    weight: 100
+  port:
+    targetPort: http
+  {{- if .Values.openshift.route.tls.enabled }}
+  tls:
+    termination: {{ .Values.openshift.route.tls.termination }}
+    {{- if .Values.openshift.route.tls.insecureEdgeTerminationPolicy }}
+    insecureEdgeTerminationPolicy: {{ .Values.openshift.route.tls.insecureEdgeTerminationPolicy }}
+    {{- end }}
+    {{- if .Values.openshift.route.tls.certificate }}
+    certificate: |
+      {{- .Values.openshift.route.tls.certificate | nindent 6 }}
+    {{- end }}
+    {{- if .Values.openshift.route.tls.key }}
+    key: |
+      {{- .Values.openshift.route.tls.key | nindent 6 }}
+    {{- end }}
+    {{- if .Values.openshift.route.tls.caCertificate }}
+    caCertificate: |
+      {{- .Values.openshift.route.tls.caCertificate | nindent 6 }}
+    {{- end }}
+    {{- if .Values.openshift.route.tls.destinationCACertificate }}
+    destinationCACertificate: |
+      {{- .Values.openshift.route.tls.destinationCACertificate | nindent 6 }}
+    {{- end }}
+  {{- end }}
+  wildcardPolicy: {{ .Values.openshift.route.wildcardPolicy }}
+{{- end }}

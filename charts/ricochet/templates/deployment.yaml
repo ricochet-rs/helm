@@ -47,15 +47,17 @@ spec:
       initContainers:
         {{- if .Values.persistence.home.enabled }}
         - name: fix-permissions
-          image: {{ .Values.busyboxImage }}
+          image: {{ include "ricochet.initContainerImage" . }}
           command: ['sh', '-c']
           args:
             - |
               mkdir -p {{ .Values.persistence.home.mountPath }}/content
-              chown -R 1000:1000 {{ .Values.persistence.home.mountPath }}
           securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
           volumeMounts:
             {{- if .Values.persistence.home.enabled }}
             - name: home-storage
@@ -64,7 +66,7 @@ spec:
         {{- end }}
         {{- if ne (len .Values.config) 0 }}
         - name: merge-config
-          image: {{ .Values.busyboxImage }}
+          image: {{ include "ricochet.initContainerImage" . }}
           command: ['sh', '-c']
           args:
             - |
@@ -122,11 +124,12 @@ spec:
               {{- end }}
               {{- end }}
 
-              # Set proper permissions
-              chown -R 1000:1000 /var/lib/ricochet/data
           securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
           volumeMounts:
             {{- if ne (len .Values.config) 0 }}
             - name: config
