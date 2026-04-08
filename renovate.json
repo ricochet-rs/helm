@@ -4,8 +4,10 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["charts/.+/values\\.yaml$"],
-      "matchStrings": ["#\\s*renovate:\\s*image\\n\\s+\\w+:\\s*(?<depName>[^:]+):(?<currentValue>.+)"],
+      "managerFilePatterns": ["/charts/.+/values\\.yaml$/"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*image\\n\\s+\\w+:\\s*(?<depName>[^:]+):(?<currentValue>.+)"
+      ],
       "datasourceTemplate": "docker"
     }
   ],
