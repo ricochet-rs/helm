@@ -45,6 +45,28 @@ spec:
       {{- end }}
       {{- if or .Values.initContainers .Values.persistence.home.enabled (ne (len .Values.config) 0) .Values.telemetry.jaeger.enabled }}
       initContainers:
+        {{- if and .Values.persistence.home.enabled (eq (include "ricochet.fixPermissions.enabled" .) "true") }}
+        - name: fix-permissions-root
+          image: {{ include "ricochet.initContainerImage" . }}
+          command: ['sh', '-c']
+          args:
+            - |
+              chown -R {{ .Values.podSecurityContext.runAsUser | default 1000 }}:{{ .Values.podSecurityContext.fsGroup | default 1000 }} {{ .Values.persistence.home.mountPath }}
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+                - FOWNER
+                - DAC_OVERRIDE
+          volumeMounts:
+            - name: home-storage
+              mountPath: {{ .Values.persistence.home.mountPath }}
+        {{- end }}
         {{- if .Values.persistence.home.enabled }}
         - name: fix-permissions
           image: {{ include "ricochet.initContainerImage" . }}
