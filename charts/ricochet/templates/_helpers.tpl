@@ -87,3 +87,29 @@ Return the init container image name
 {{- $tag := .Values.initContainerImage.tag -}}
 {{- printf "%s/%s:%s" $registry $repository $tag -}}
 {{- end }}
+
+{{/*
+Detect whether the target cluster is OpenShift by probing for
+OpenShift-specific API groups. Relies on .Capabilities, which is populated
+during `helm install` / `helm upgrade`; `helm template` without `--validate`
+falls back to "not OpenShift" (vanilla Kubernetes).
+*/}}
+{{- define "ricochet.isOpenShift" -}}
+{{- or (.Capabilities.APIVersions.Has "security.openshift.io/v1") (.Capabilities.APIVersions.Has "route.openshift.io/v1") -}}
+{{- end }}
+
+{{/*
+Resolve persistence.home.fixPermissions.enabled with auto-detection.
+Returns the literal string "true" or "false".
+  - Explicit bool value wins.
+  - null (default) → enabled unless OpenShift is detected (SCC typically
+    blocks root init containers).
+*/}}
+{{- define "ricochet.fixPermissions.enabled" -}}
+{{- $v := .Values.persistence.home.fixPermissions.enabled -}}
+{{- if kindIs "bool" $v -}}
+{{- $v -}}
+{{- else -}}
+{{- not (eq (include "ricochet.isOpenShift" .) "true") -}}
+{{- end -}}
+{{- end }}

@@ -152,18 +152,25 @@ tests:
         server:
           port: 6188
     asserts:
-      # Should have both fix-permissions and merge-config containers
+      # Should have fix-permissions-root, fix-permissions, and merge-config
       - lengthEqual:
           path: spec.template.spec.initContainers
-          count: 2
+          count: 3
         template: deployment.yaml
-      # Check for merge-config container at index 1 (after fix-permissions)
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: fix-permissions-root
+        template: deployment.yaml
       - equal:
           path: spec.template.spec.initContainers[1].name
+          value: fix-permissions
+        template: deployment.yaml
+      - equal:
+          path: spec.template.spec.initContainers[2].name
           value: merge-config
         template: deployment.yaml
       - contains:
-          path: spec.template.spec.initContainers[1].volumeMounts
+          path: spec.template.spec.initContainers[2].volumeMounts
           content:
             name: home-storage
             mountPath: /var/lib/ricochet/data
