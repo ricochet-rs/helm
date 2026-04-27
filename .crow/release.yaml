@@ -43,7 +43,7 @@ steps:
       - helm push /tmp/ricochet-helm-${CI_COMMIT_TAG#v}.tgz oci://reg.ricochet.rs/ricochet
 
   changelog:
-    image: reg.ricochet.rs/docker.io/thegeeklab/git-sv:2.0.11
+    image: reg.ricochet.rs/docker.io/thegeeklab/git-sv:2.1.0
     commands:
       - apk add --no-cache -q sed
       - git sv current-version
