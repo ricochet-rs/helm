@@ -209,6 +209,13 @@ podLabels: {}
 # podSecurityContext -- Security context for pods
 podSecurityContext:
   fsGroup: 1000
+  # fsGroupChangePolicy "Always" forces kubelet to recursively normalize
+  # ownership/permissions of the mounted volume to match fsGroup on every pod
+  # start. This heals drift from pre-1.0.0 data (when init containers chowned
+  # as root) and from any spawned content/restore pods that write files as a
+  # different UID. The default "OnRootMismatch" only touches the mount root,
+  # which is not sufficient for this chart.
+  fsGroupChangePolicy: Always
   runAsNonRoot: true
   runAsUser: 1000
   runAsGroup: 1000
@@ -265,6 +272,21 @@ persistence:
     annotations: {}
     # persistence.home.existingClaim -- Use an existing PVC for home
     existingClaim: ''
+    # persistence.home.fixPermissions -- Root chown init container for the home PVC
+    # Runs a privileged init container that recursively chowns the home PVC to
+    # podSecurityContext.runAsUser:fsGroup before the main container starts.
+    # Needed because:
+    #   - Pre-1.0.0 data on the PVC may be root-owned (old chart ran `chown -R`)
+    #   - Content/restore pods spawned by the proxy currently don't set a
+    #     securityContext and may drop files owned by other UIDs
+    # fsGroupChangePolicy: Always (set on podSecurityContext) covers many cases
+    # but not ownership drift from writers other than the proxy itself.
+    fixPermissions:
+      # persistence.home.fixPermissions.enabled -- Enable the root chown init container
+      # Accepts true, false, or null (auto). When null (default), enabled on
+      # vanilla Kubernetes and disabled on OpenShift (SCC blocks root init
+      # containers). Set explicitly to override detection.
+      enabled: null
 
 # serviceAccount -- Service account configuration
 serviceAccount:

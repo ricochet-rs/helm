@@ -1,0 +1,109 @@
+suite: fix-permissions init container
+templates:
+  - deployment.yaml
+tests:
+  - it: enables fix-permissions-root by default on vanilla K8s when home PVC is enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: fix-permissions-root
+      - equal:
+          path: spec.template.spec.initContainers[0].securityContext.runAsUser
+          value: 0
+      - equal:
+          path: spec.template.spec.initContainers[0].securityContext.runAsNonRoot
+          value: false
+      - contains:
+          path: spec.template.spec.initContainers[0].securityContext.capabilities.add
+          content: CHOWN
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R 1000:1000 /var/lib/ricochet/data'
+
+  - it: uses custom uid/gid from podSecurityContext
+    set:
+      persistence:
+        home:
+          enabled: true
+      podSecurityContext:
+        runAsUser: 2000
+        fsGroup: 3000
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R 2000:3000 /var/lib/ricochet/data'
+
+  - it: disables fix-permissions-root when explicitly set to false
+    set:
+      persistence:
+        home:
+          enabled: true
+          fixPermissions:
+            enabled: false
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: fix-permissions
+      - notContains:
+          path: spec.template.spec.initContainers
+          content:
+            name: fix-permissions-root
+          any: true
+
+  - it: disables fix-permissions-root when OpenShift is detected (auto)
+    set:
+      persistence:
+        home:
+          enabled: true
+    capabilities:
+      apiVersions:
+        - security.openshift.io/v1
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: fix-permissions
+      - notContains:
+          path: spec.template.spec.initContainers
+          content:
+            name: fix-permissions-root
+          any: true
+
+  - it: keeps fix-permissions-root on OpenShift when explicitly enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+          fixPermissions:
+            enabled: true
+    capabilities:
+      apiVersions:
+        - security.openshift.io/v1
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: fix-permissions-root
+
+  - it: skips fix-permissions-root when home PVC is disabled
+    set:
+      persistence:
+        home:
+          enabled: false
+      config:
+        server:
+          port: 6188
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers
+          content:
+            name: fix-permissions-root
+          any: true
+
+  - it: sets fsGroupChangePolicy Always on the pod securityContext
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: Always
