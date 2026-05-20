@@ -86,6 +86,23 @@ spec:
               mountPath: {{ .Values.persistence.home.mountPath }}
             {{- end }}
         {{- end }}
+        - name: stage-vendor
+          image: {{ include "ricochet.image" . }}
+          imagePullPolicy: {{ include "ricochet.imagePullPolicy" . }}
+          command: ['sh', '-c']
+          args:
+            - |
+              mkdir -p {{ .Values.apps.deployment.persistence.cache.mountPath }}/vendor/r
+              cp /var/lib/ricochet/data/vendor/r/renv.tar.gz {{ .Values.apps.deployment.persistence.cache.mountPath }}/vendor/r/renv.tar.gz
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsNonRoot: true
+          volumeMounts:
+            - name: apps-cache-storage
+              mountPath: {{ .Values.apps.deployment.persistence.cache.mountPath }}
         {{- if ne (len .Values.config) 0 }}
         - name: merge-config
           image: {{ include "ricochet.initContainerImage" . }}
@@ -349,11 +366,13 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.apps.deployment.persistence.content.existingClaim | default (printf "%s-apps-content" (include "ricochet.fullname" .)) }}
         {{- end }}
-        {{- if .Values.apps.deployment.persistence.cache.enabled }}
         - name: apps-cache-storage
+          {{- if .Values.apps.deployment.persistence.cache.enabled }}
           persistentVolumeClaim:
             claimName: {{ .Values.apps.deployment.persistence.cache.existingClaim | default (printf "%s-apps-cache" (include "ricochet.fullname" .)) }}
-        {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
