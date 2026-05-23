@@ -53,7 +53,7 @@ initContainerImage:
   # initContainerImage.repository -- Repository for the init container image
   repository: busybox
   # initContainerImage.tag -- Tag for the init container image
-  tag: '1.37'
+  tag: '1.38'
 
 apps:
   deployment:
