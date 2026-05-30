@@ -22,7 +22,10 @@ tests:
           content: CHOWN
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'chown -R 1000:1000 /var/lib/ricochet/data'
+          pattern: 'UID_GID="1000:1000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R "\$UID_GID" /var/lib/ricochet/data'
 
   - it: uses custom uid/gid from podSecurityContext
     set:
@@ -35,7 +38,64 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'chown -R 2000:3000 /var/lib/ricochet/data'
+          pattern: 'UID_GID="2000:3000"'
+
+  - it: also chowns and mounts the content PVC when enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+      apps:
+        deployment:
+          persistence:
+            content:
+              enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R "\$UID_GID" /var/lib/ricochet/data/content'
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: apps-content-storage
+            mountPath: /var/lib/ricochet/data/content
+
+  - it: also chowns and mounts the cache PVC when enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+      apps:
+        deployment:
+          persistence:
+            cache:
+              enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R "\$UID_GID" /var/lib/ricochet/data/.cache'
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: apps-cache-storage
+            mountPath: /var/lib/ricochet/data/.cache
+
+  - it: does not mount apps PVCs when they are disabled
+    set:
+      persistence:
+        home:
+          enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: apps-content-storage
+            mountPath: /var/lib/ricochet/data/content
+      - notContains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: apps-cache-storage
+            mountPath: /var/lib/ricochet/data/.cache
 
   - it: disables fix-permissions-root when explicitly set to false
     set:
