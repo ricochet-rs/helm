@@ -51,7 +51,14 @@ spec:
           command: ['sh', '-c']
           args:
             - |
-              chown -R {{ .Values.podSecurityContext.runAsUser | default 1000 }}:{{ .Values.podSecurityContext.fsGroup | default 1000 }} {{ .Values.persistence.home.mountPath }}
+              UID_GID="{{ .Values.podSecurityContext.runAsUser | default 1000 }}:{{ .Values.podSecurityContext.fsGroup | default 1000 }}"
+              chown -R "$UID_GID" {{ .Values.persistence.home.mountPath }}
+              {{- if .Values.apps.deployment.persistence.content.enabled }}
+              chown -R "$UID_GID" {{ .Values.apps.deployment.persistence.content.mountPath }}
+              {{- end }}
+              {{- if .Values.apps.deployment.persistence.cache.enabled }}
+              chown -R "$UID_GID" {{ .Values.apps.deployment.persistence.cache.mountPath }}
+              {{- end }}
           securityContext:
             runAsUser: 0
             runAsNonRoot: false
@@ -66,6 +73,14 @@ spec:
           volumeMounts:
             - name: home-storage
               mountPath: {{ .Values.persistence.home.mountPath }}
+            {{- if .Values.apps.deployment.persistence.content.enabled }}
+            - name: apps-content-storage
+              mountPath: {{ .Values.apps.deployment.persistence.content.mountPath }}
+            {{- end }}
+            {{- if .Values.apps.deployment.persistence.cache.enabled }}
+            - name: apps-cache-storage
+              mountPath: {{ .Values.apps.deployment.persistence.cache.mountPath }}
+            {{- end }}
         {{- end }}
         {{- if .Values.persistence.home.enabled }}
         - name: fix-permissions
