@@ -358,7 +358,7 @@ telemetry:
     resources: {}
     # jaeger.initImage -- Busybox image used by the init container to write the Jaeger config
     # renovate: image
-    initImage: busybox:1.37
+    initImage: busybox:1.38
 
 # openshift -- OpenShift-specific configuration
 openshift:
