@@ -41,7 +41,7 @@ spec:
       serviceAccountName: {{ include "ricochet.serviceAccountName" . }}
       {{- if .Values.podSecurityContext }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- include "ricochet.podSecurityContext" . | nindent 8 }}
       {{- end }}
       {{- if or .Values.initContainers .Values.persistence.home.enabled (ne (len .Values.config) 0) .Values.telemetry.jaeger.enabled }}
       initContainers:

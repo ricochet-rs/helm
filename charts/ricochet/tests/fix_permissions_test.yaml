@@ -162,8 +162,71 @@ tests:
             name: fix-permissions-root
           any: true
 
-  - it: sets fsGroupChangePolicy Always on the pod securityContext
+  - it: defaults fsGroupChangePolicy to OnRootMismatch when fix-permissions-root init container is enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: OnRootMismatch
+
+  - it: defaults fsGroupChangePolicy to Always when fix-permissions-root is explicitly disabled
+    set:
+      persistence:
+        home:
+          enabled: true
+          fixPermissions:
+            enabled: false
     asserts:
       - equal:
           path: spec.template.spec.securityContext.fsGroupChangePolicy
           value: Always
+
+  - it: defaults fsGroupChangePolicy to Always on OpenShift (init container auto-disabled)
+    set:
+      persistence:
+        home:
+          enabled: true
+    capabilities:
+      apiVersions:
+        - security.openshift.io/v1
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: Always
+
+  - it: honors explicit fsGroupChangePolicy override even when init container is enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+      podSecurityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: Always
+
+  - it: defaults fsGroupChangePolicy to Always when home PVC is disabled
+    set:
+      persistence:
+        home:
+          enabled: false
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: Always
+
+  - it: skips fsGroupChangePolicy auto-fill when fsGroup is unset
+    set:
+      persistence:
+        home:
+          enabled: true
+      podSecurityContext:
+        fsGroup: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy

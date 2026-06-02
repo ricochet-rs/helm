@@ -113,3 +113,32 @@ Returns the literal string "true" or "false".
 {{- not (eq (include "ricochet.isOpenShift" .) "true") -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+Render the effective podSecurityContext. Fills in fsGroupChangePolicy
+when the user has not set it explicitly:
+  - "OnRootMismatch" when the home PVC is enabled and the
+    fix-permissions-root init container will do the recursive chown
+    (the typical vanilla Kubernetes case). Kubelet only normalizes the
+    mount root, avoiding a redundant deep walk that is very expensive
+    on slow storage backends (Azure Files NFS/SMB, large trees).
+  - "Always" otherwise. Covers OpenShift (init container auto-disabled
+    by `ricochet.fixPermissions.enabled`), explicit
+    `fixPermissions.enabled: false`, and `home.enabled: false`. Without
+    the init container, kubelet is the only mechanism that can heal
+    ownership drift.
+fsGroupChangePolicy is a no-op without fsGroup, so the auto-fill only
+triggers when fsGroup is set. To opt out of the auto-fill, set the
+policy explicitly.
+*/}}
+{{- define "ricochet.podSecurityContext" -}}
+{{- $psc := deepCopy (.Values.podSecurityContext | default dict) -}}
+{{- if and (hasKey $psc "fsGroup") (not (hasKey $psc "fsGroupChangePolicy")) -}}
+{{- if and .Values.persistence.home.enabled (eq (include "ricochet.fixPermissions.enabled" .) "true") -}}
+{{- $_ := set $psc "fsGroupChangePolicy" "OnRootMismatch" -}}
+{{- else -}}
+{{- $_ := set $psc "fsGroupChangePolicy" "Always" -}}
+{{- end -}}
+{{- end -}}
+{{- toYaml $psc -}}
+{{- end }}
