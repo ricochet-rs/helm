@@ -22,10 +22,16 @@ tests:
           content: CHOWN
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'UID_GID="1000:1000"'
+          pattern: 'UID="1000"'
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'chown -R "\$UID_GID" /var/lib/ricochet/data'
+          pattern: 'GID="1000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'SENTINEL="\.ricochet-perms-fixed-1000-1000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'heal /var/lib/ricochet/data'
 
   - it: uses custom uid/gid from podSecurityContext
     set:
@@ -38,7 +44,16 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'UID_GID="2000:3000"'
+          pattern: 'UID="2000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'GID="3000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'SENTINEL="\.ricochet-perms-fixed-2000-3000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'heal /var/lib/ricochet/data'
 
   - it: also chowns and mounts the content PVC when enabled
     set:
@@ -53,7 +68,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'chown -R "\$UID_GID" /var/lib/ricochet/data/content'
+          pattern: 'heal /var/lib/ricochet/data/content'
       - contains:
           path: spec.template.spec.initContainers[0].volumeMounts
           content:
@@ -73,7 +88,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'chown -R "\$UID_GID" /var/lib/ricochet/data/.cache'
+          pattern: 'heal /var/lib/ricochet/data/\.cache'
       - contains:
           path: spec.template.spec.initContainers[0].volumeMounts
           content:
@@ -230,3 +245,28 @@ tests:
     asserts:
       - notExists:
           path: spec.template.spec.securityContext.fsGroupChangePolicy
+
+  - it: defines the heal function that skips when sentinel matches
+    set:
+      persistence:
+        home:
+          enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'heal\(\) \{'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'if \[ -e "\$dir/\$SENTINEL" \]'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R "\$UID:\$GID" "\$dir"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'touch "\$dir/\$SENTINEL"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'return 0'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R "\$UID:\$GID" "\$dir" \|\|'

@@ -51,13 +51,28 @@ spec:
           command: ['sh', '-c']
           args:
             - |
-              UID_GID="{{ .Values.podSecurityContext.runAsUser | default 1000 }}:{{ .Values.podSecurityContext.fsGroup | default 1000 }}"
-              chown -R "$UID_GID" {{ .Values.persistence.home.mountPath }}
+              UID="{{ .Values.podSecurityContext.runAsUser | default 1000 }}"
+              GID="{{ .Values.podSecurityContext.fsGroup | default 1000 }}"
+              SENTINEL=".ricochet-perms-fixed-{{ .Values.podSecurityContext.runAsUser | default 1000 }}-{{ .Values.podSecurityContext.fsGroup | default 1000 }}"
+
+              heal() {
+                dir="$1"
+                if [ -e "$dir/$SENTINEL" ]; then
+                  echo "[$dir] already healed for $UID:$GID, skipping recursive chown"
+                  return 0
+                fi
+                echo "[$dir] running chown -R $UID:$GID..."
+                chown -R "$UID:$GID" "$dir" || { echo "[$dir] chown failed, sentinel NOT written — will retry on next start"; return 1; }
+                touch "$dir/$SENTINEL" && chown "$UID:$GID" "$dir/$SENTINEL"
+                echo "[$dir] healed and sentinel written"
+              }
+
+              heal {{ .Values.persistence.home.mountPath }}
               {{- if .Values.apps.deployment.persistence.content.enabled }}
-              chown -R "$UID_GID" {{ .Values.apps.deployment.persistence.content.mountPath }}
+              heal {{ .Values.apps.deployment.persistence.content.mountPath }}
               {{- end }}
               {{- if .Values.apps.deployment.persistence.cache.enabled }}
-              chown -R "$UID_GID" {{ .Values.apps.deployment.persistence.cache.mountPath }}
+              heal {{ .Values.apps.deployment.persistence.cache.mountPath }}
               {{- end }}
           securityContext:
             runAsUser: 0
