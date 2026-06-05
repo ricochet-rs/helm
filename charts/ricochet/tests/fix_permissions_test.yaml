@@ -51,6 +51,9 @@ tests:
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
           pattern: 'SENTINEL="\.ricochet-perms-fixed-2000-3000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'heal /var/lib/ricochet/data'
 
   - it: also chowns and mounts the content PVC when enabled
     set:
@@ -261,3 +264,6 @@ tests:
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
           pattern: 'touch "\$dir/\$SENTINEL"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'return 0'
