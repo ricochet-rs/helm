@@ -267,3 +267,6 @@ tests:
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
           pattern: 'return 0'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R "\$UID:\$GID" "\$dir" \|\|'

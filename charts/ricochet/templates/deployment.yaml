@@ -62,7 +62,7 @@ spec:
                   return 0
                 fi
                 echo "[$dir] running chown -R $UID:$GID..."
-                chown -R "$UID:$GID" "$dir"
+                chown -R "$UID:$GID" "$dir" || { echo "[$dir] chown failed, sentinel NOT written — will retry on next start"; return 1; }
                 touch "$dir/$SENTINEL" && chown "$UID:$GID" "$dir/$SENTINEL"
                 echo "[$dir] healed and sentinel written"
               }
