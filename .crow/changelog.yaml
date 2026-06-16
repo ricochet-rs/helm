@@ -1,6 +1,6 @@
 clone:
   git:
-    image: codeberg.org/crow-plugins/clone:1.0.4
+    image: codeberg.org/crow-plugins/clone:1.1.0
     settings:
       tags: true
 
@@ -16,7 +16,7 @@ steps:
     environment:
       GH_TOKEN:
         from_secret: ricochet_issue_token
-    image: reg.devxy.io/docker.io/thegeeklab/git-sv:2.1.1
+    image: reg.devxy.io/docker.io/thegeeklab/git-sv:2.1.2
     commands: |
       apk add -q --no-cache jq github-cli
 
