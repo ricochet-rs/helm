@@ -123,7 +123,7 @@ spec:
           args:
             - |
               mkdir -p {{ .Values.apps.deployment.persistence.cache.mountPath }}/vendor/r
-              cp /var/lib/ricochet/data/vendor/r/renv.tar.gz {{ .Values.apps.deployment.persistence.cache.mountPath }}/vendor/r/renv.tar.gz
+              cp /var/lib/ricochet/vendor/r/renv.tar.gz {{ .Values.apps.deployment.persistence.cache.mountPath }}/vendor/r/renv.tar.gz
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
