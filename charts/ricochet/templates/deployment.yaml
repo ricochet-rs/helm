@@ -41,7 +41,7 @@ spec:
       serviceAccountName: {{ include "ricochet.serviceAccountName" . }}
       {{- if .Values.podSecurityContext }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- include "ricochet.podSecurityContext" . | nindent 8 }}
       {{- end }}
       {{- if or .Values.initContainers .Values.persistence.home.enabled (ne (len .Values.config) 0) .Values.telemetry.jaeger.enabled }}
       initContainers:
@@ -51,7 +51,29 @@ spec:
           command: ['sh', '-c']
           args:
             - |
-              chown -R {{ .Values.podSecurityContext.runAsUser | default 1000 }}:{{ .Values.podSecurityContext.fsGroup | default 1000 }} {{ .Values.persistence.home.mountPath }}
+              UID="{{ .Values.podSecurityContext.runAsUser | default 1000 }}"
+              GID="{{ .Values.podSecurityContext.fsGroup | default 1000 }}"
+              SENTINEL=".ricochet-perms-fixed-{{ .Values.podSecurityContext.runAsUser | default 1000 }}-{{ .Values.podSecurityContext.fsGroup | default 1000 }}"
+
+              heal() {
+                dir="$1"
+                if [ -e "$dir/$SENTINEL" ]; then
+                  echo "[$dir] already healed for $UID:$GID, skipping recursive chown"
+                  return 0
+                fi
+                echo "[$dir] running chown -R $UID:$GID..."
+                chown -R "$UID:$GID" "$dir" || { echo "[$dir] chown failed, sentinel NOT written — will retry on next start"; return 1; }
+                touch "$dir/$SENTINEL" && chown "$UID:$GID" "$dir/$SENTINEL"
+                echo "[$dir] healed and sentinel written"
+              }
+
+              heal {{ .Values.persistence.home.mountPath }}
+              {{- if .Values.apps.deployment.persistence.content.enabled }}
+              heal {{ .Values.apps.deployment.persistence.content.mountPath }}
+              {{- end }}
+              {{- if .Values.apps.deployment.persistence.cache.enabled }}
+              heal {{ .Values.apps.deployment.persistence.cache.mountPath }}
+              {{- end }}
           securityContext:
             runAsUser: 0
             runAsNonRoot: false
@@ -66,6 +88,14 @@ spec:
           volumeMounts:
             - name: home-storage
               mountPath: {{ .Values.persistence.home.mountPath }}
+            {{- if .Values.apps.deployment.persistence.content.enabled }}
+            - name: apps-content-storage
+              mountPath: {{ .Values.apps.deployment.persistence.content.mountPath }}
+            {{- end }}
+            {{- if .Values.apps.deployment.persistence.cache.enabled }}
+            - name: apps-cache-storage
+              mountPath: {{ .Values.apps.deployment.persistence.cache.mountPath }}
+            {{- end }}
         {{- end }}
         {{- if .Values.persistence.home.enabled }}
         - name: fix-permissions

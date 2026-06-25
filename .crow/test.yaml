@@ -16,7 +16,7 @@ matrix:
 
 steps:
   lint:
-    image: reg.ricochet.rs/docker.io/alpine/helm:4.2.0
+    image: reg.ricochet.rs/docker.io/alpine/helm:4.2.2
     commands:
       - helm lint --with-subcharts charts/*
 

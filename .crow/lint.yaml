@@ -18,7 +18,7 @@ steps:
       path: '*.{md,markdown}'
 
   editor-config:
-    image: reg.ricochet.rs/docker.io/mstruebing/editorconfig-checker:v3.6.1
+    image: reg.ricochet.rs/docker.io/mstruebing/editorconfig-checker:v3.7.0
     depends_on: []
 
   prettier:
@@ -26,14 +26,14 @@ steps:
     depends_on: []
 
   helm-lint:
-    image: reg.ricochet.rs/docker.io/alpine/helm:4.2.0
+    image: reg.ricochet.rs/docker.io/alpine/helm:4.2.2
     depends_on: []
     commands:
       - helm dependency update charts/*
       - helm lint charts/*
 
   lint-yaml:
-    image: reg.ricochet.rs/docker.io/pipelinecomponents/yamllint:0.35.9
+    image: reg.ricochet.rs/docker.io/pipelinecomponents/yamllint:0.35.13
     depends_on: []
     commands:
       - yamllint .

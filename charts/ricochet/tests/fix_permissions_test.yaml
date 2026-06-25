@@ -22,7 +22,16 @@ tests:
           content: CHOWN
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'chown -R 1000:1000 /var/lib/ricochet/data'
+          pattern: 'UID="1000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'GID="1000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'SENTINEL="\.ricochet-perms-fixed-1000-1000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'heal /var/lib/ricochet/data'
 
   - it: uses custom uid/gid from podSecurityContext
     set:
@@ -35,7 +44,73 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'chown -R 2000:3000 /var/lib/ricochet/data'
+          pattern: 'UID="2000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'GID="3000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'SENTINEL="\.ricochet-perms-fixed-2000-3000"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'heal /var/lib/ricochet/data'
+
+  - it: also chowns and mounts the content PVC when enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+      apps:
+        deployment:
+          persistence:
+            content:
+              enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'heal /var/lib/ricochet/data/content'
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: apps-content-storage
+            mountPath: /var/lib/ricochet/data/content
+
+  - it: also chowns and mounts the cache PVC when enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+      apps:
+        deployment:
+          persistence:
+            cache:
+              enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'heal /var/lib/ricochet/data/\.cache'
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: apps-cache-storage
+            mountPath: /var/lib/ricochet/data/.cache
+
+  - it: does not mount apps PVCs when they are disabled
+    set:
+      persistence:
+        home:
+          enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: apps-content-storage
+            mountPath: /var/lib/ricochet/data/content
+      - notContains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: apps-cache-storage
+            mountPath: /var/lib/ricochet/data/.cache
 
   - it: disables fix-permissions-root when explicitly set to false
     set:
@@ -102,8 +177,96 @@ tests:
             name: fix-permissions-root
           any: true
 
-  - it: sets fsGroupChangePolicy Always on the pod securityContext
+  - it: defaults fsGroupChangePolicy to OnRootMismatch when fix-permissions-root init container is enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: OnRootMismatch
+
+  - it: defaults fsGroupChangePolicy to Always when fix-permissions-root is explicitly disabled
+    set:
+      persistence:
+        home:
+          enabled: true
+          fixPermissions:
+            enabled: false
     asserts:
       - equal:
           path: spec.template.spec.securityContext.fsGroupChangePolicy
           value: Always
+
+  - it: defaults fsGroupChangePolicy to Always on OpenShift (init container auto-disabled)
+    set:
+      persistence:
+        home:
+          enabled: true
+    capabilities:
+      apiVersions:
+        - security.openshift.io/v1
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: Always
+
+  - it: honors explicit fsGroupChangePolicy override even when init container is enabled
+    set:
+      persistence:
+        home:
+          enabled: true
+      podSecurityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: Always
+
+  - it: defaults fsGroupChangePolicy to Always when home PVC is disabled
+    set:
+      persistence:
+        home:
+          enabled: false
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: Always
+
+  - it: skips fsGroupChangePolicy auto-fill when fsGroup is unset
+    set:
+      persistence:
+        home:
+          enabled: true
+      podSecurityContext:
+        fsGroup: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+
+  - it: defines the heal function that skips when sentinel matches
+    set:
+      persistence:
+        home:
+          enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'heal\(\) \{'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'if \[ -e "\$dir/\$SENTINEL" \]'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R "\$UID:\$GID" "\$dir"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'touch "\$dir/\$SENTINEL"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'return 0'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'chown -R "\$UID:\$GID" "\$dir" \|\|'
