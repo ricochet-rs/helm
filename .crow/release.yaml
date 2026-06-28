@@ -16,7 +16,6 @@ depends_on:
 steps:
   release-chart:
     environment:
-      PNPM_HOME: /usr/local/bin
       HELM_DOCS_VERSION: v1.14.2 # renovate: datasource=github-releases depName=norwoodj/helm-docs
       GITHUB_TOKEN:
         from_secret: ricochet_issue_token
@@ -29,9 +28,8 @@ steps:
       # update docs
       - apk add -q --no-cache go pnpm
       - go install github.com/norwoodj/helm-docs/cmd/helm-docs@$HELM_DOCS_VERSION
-      - ~/go/bin/helm-docs -x --skip-version-footer
-      - pnpm install -g prettier
-      - prettier -w .
+      - ~/go/bin/helm-docs --skip-version-footer
+      - pnpm dlx prettier -w .
       # package
       - helm dependency update charts/*
       - helm package --version "${CI_COMMIT_TAG#v}" -d /tmp/ charts/*
