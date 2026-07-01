@@ -365,7 +365,7 @@ telemetry:
     enabled: false
     # jaeger.image -- Jaeger v2 image to use (avoid latest in production)
     # renovate: image
-    image: jaegertracing/jaeger:2.18.0
+    image: jaegertracing/jaeger:2.19.0
     # jaeger.resources -- Resource requests/limits for the Jaeger sidecar
     resources: {}
     # jaeger.initImage -- Busybox image used by the init container to write the Jaeger config
