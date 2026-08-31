@@ -208,7 +208,7 @@ podLabels: {}
 
 # podSecurityContext -- Security context for pods. fsGroupChangePolicy is auto-selected by the chart based on persistence.home.fixPermissions; see inline comments in values.yaml.
 podSecurityContext:
-  fsGroup: 1000
+  fsGroup: 0
   # fsGroupChangePolicy controls how kubelet applies fsGroup to mounted
   # volumes. Auto-selected by the chart based on whether the
   # persistence.home.fixPermissions init container will run:
@@ -228,7 +228,7 @@ podSecurityContext:
   # fsGroupChangePolicy: Always
   runAsNonRoot: true
   runAsUser: 1000
-  runAsGroup: 1000
+  runAsGroup: 0
   seccompProfile:
     type: RuntimeDefault
 
@@ -241,7 +241,7 @@ securityContext:
   readOnlyRootFilesystem: false
   runAsNonRoot: true
   runAsUser: 1000
-  runAsGroup: 1000
+  runAsGroup: 0
 
 # livenessProbe -- Liveness probe configuration
 livenessProbe:
@@ -287,12 +287,11 @@ persistence:
     # podSecurityContext.runAsUser:fsGroup before the main container starts.
     # Needed because:
     #   - Pre-1.0.0 data on the PVC may be root-owned (old chart ran `chown -R`)
-    #   - Content/restore pods spawned by the proxy currently don't set a
-    #     securityContext and may drop files owned by other UIDs
+    #   - Data written before the move to GID 0 is owned 1000:1000, which the
+    #     group bit no longer covers; this is the one-release migration path
     # fsGroupChangePolicy is auto-selected by the chart based on whether this
     # init container will run (see the podSecurityContext comment for details).
-    # Ownership drift from writers other than the proxy itself is a separate
-    # structural fix in ricochet-proxy.
+    # Spawned pods no longer drift: ricochet-proxy inherits its own uid/gid.
     fixPermissions:
       # persistence.home.fixPermissions.enabled -- Enable the root chown init container
       # Accepts true, false, or null (auto). When null (default), enabled on
