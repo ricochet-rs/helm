@@ -18,7 +18,7 @@ steps:
       path: '*.{md,markdown}'
 
   editor-config:
-    image: reg.ricochet.rs/docker.io/mstruebing/editorconfig-checker:v3.11.1
+    image: reg.ricochet.rs/docker.io/mstruebing/editorconfig-checker:v3.11.2
     depends_on: []
 
   prettier:
