@@ -25,10 +25,10 @@ tests:
           pattern: 'UID="1000"'
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'GID="1000"'
+          pattern: 'GID="0"'
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'SENTINEL="\.ricochet-perms-fixed-1000-1000"'
+          pattern: 'SENTINEL="\.ricochet-perms-fixed-\$UID-\$GID"'
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
           pattern: 'heal /var/lib/ricochet/data'
@@ -50,10 +50,24 @@ tests:
           pattern: 'GID="3000"'
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'SENTINEL="\.ricochet-perms-fixed-2000-3000"'
+          pattern: 'heal /var/lib/ricochet/data'
+
+  - it: keeps an explicit group of 0 instead of falling back to 1000
+    set:
+      persistence:
+        home:
+          enabled: true
+      podSecurityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+        fsGroup: 0
+    asserts:
       - matchRegex:
           path: spec.template.spec.initContainers[0].args[0]
-          pattern: 'heal /var/lib/ricochet/data'
+          pattern: 'UID="0"'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'GID="0"'
 
   - it: also chowns and mounts the content PVC when enabled
     set:

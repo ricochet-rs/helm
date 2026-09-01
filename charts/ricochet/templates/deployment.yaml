@@ -51,9 +51,10 @@ spec:
           command: ['sh', '-c']
           args:
             - |
-              UID="{{ .Values.podSecurityContext.runAsUser | default 1000 }}"
-              GID="{{ .Values.podSecurityContext.fsGroup | default 1000 }}"
-              SENTINEL=".ricochet-perms-fixed-{{ .Values.podSecurityContext.runAsUser | default 1000 }}-{{ .Values.podSecurityContext.fsGroup | default 1000 }}"
+              {{- /* `default` treats the group 0 the images grant as empty, so dig on the key instead. */}}
+              UID="{{ dig "runAsUser" 1000 (.Values.podSecurityContext | default dict) }}"
+              GID="{{ dig "fsGroup" 1000 (.Values.podSecurityContext | default dict) }}"
+              SENTINEL=".ricochet-perms-fixed-$UID-$GID"
 
               heal() {
                 dir="$1"
