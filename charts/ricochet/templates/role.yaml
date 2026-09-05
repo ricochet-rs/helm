@@ -30,5 +30,10 @@ rules:
   - apiGroups: [""]
     resources: ["endpoints"]
     verbs: ["get", "list"]
+  # A Job whose pods are rejected at admission reports neither success nor
+  # failure, so its events are the only account of why nothing was created
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
   {{- end }}
 {{- end }}

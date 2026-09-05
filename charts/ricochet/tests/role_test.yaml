@@ -1,0 +1,47 @@
+suite: role
+templates:
+  - role.yaml
+tests:
+  - it: should not create a Role when rbac.create is disabled
+    set:
+      rbac.create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should let the launcher manage the workloads it spawns
+    asserts:
+      - isKind:
+          of: Role
+      - equal:
+          path: metadata.name
+          value: ricochet
+      - contains:
+          path: rules
+          content:
+            apiGroups: ['batch']
+            resources: ['jobs']
+            verbs: ['get', 'list', 'watch', 'create', 'delete', 'patch', 'update']
+
+  - it: should read job events so an unscheduled pod can be explained
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ['']
+            resources: ['events']
+            verbs: ['list']
+
+  - it: should replace the defaults entirely when rules are given
+    set:
+      rbac.rules:
+        - apiGroups: ['']
+          resources: ['pods']
+          verbs: ['get']
+    asserts:
+      - equal:
+          path: rules
+          value:
+            - apiGroups: ['']
+              resources: ['pods']
+              verbs: ['get']
