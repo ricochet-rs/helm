@@ -314,10 +314,12 @@ rbac:
   create: true
   # rbac.rules -- Custom RBAC rules (leave empty to use default launcher permissions)
   rules: []
-  # rbac.clusterRole -- Cluster-scoped RBAC for multi-arch support
+  # rbac.clusterRole -- Cluster-scoped RBAC for multi-arch support and priority class checks
   clusterRole:
-    # rbac.clusterRole.enabled -- Enable ClusterRole for listing nodes (required for multi-arch clusters)
-    # When enabled, allows querying node architectures to spawn dependency jobs on each arch
+    # rbac.clusterRole.enabled -- Enable ClusterRole for listing nodes and reading priority classes
+    # When enabled, allows querying node architectures to spawn dependency jobs on each arch,
+    # and reading the priority classes named by config.backend so an undefined one fails at
+    # startup instead of leaving every job that carries it unscheduled
     enabled: false
 
 # config -- Ricochet TOML configuration

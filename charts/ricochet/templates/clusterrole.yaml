@@ -11,4 +11,10 @@ rules:
   - apiGroups: [""]
     resources: ["nodes"]
     verbs: ["get", "list"]
+  # Required to verify the priority classes named in [backend] at startup.
+  # Without this Ricochet cannot tell an undefined class from one it may not
+  # read, so it admits the name and every job that carries it hangs unscheduled.
+  - apiGroups: ["scheduling.k8s.io"]
+    resources: ["priorityclasses"]
+    verbs: ["get"]
 {{- end }}
