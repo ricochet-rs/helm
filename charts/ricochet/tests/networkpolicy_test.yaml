@@ -11,7 +11,7 @@ tests:
           of: NetworkPolicy
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-ricochet
+          value: ricochet
       - hasDocuments:
           count: 1
 
@@ -29,7 +29,7 @@ tests:
     asserts:
       - equal:
           path: spec.podSelector.matchLabels["app.kubernetes.io/name"]
-          value: ricochet
+          value: ricochet-helm
       - equal:
           path: spec.podSelector.matchLabels["app.kubernetes.io/instance"]
           value: RELEASE-NAME
@@ -151,12 +151,13 @@ tests:
       networkPolicy:
         enabled: true
     asserts:
-      - equal:
+      # Not an equal: a release bumps the version this label carries.
+      - matchRegex:
           path: metadata.labels["helm.sh/chart"]
-          value: ricochet-0.1.0
+          pattern: ^ricochet-helm-
       - equal:
           path: metadata.labels["app.kubernetes.io/name"]
-          value: ricochet
+          value: ricochet-helm
       - equal:
           path: metadata.labels["app.kubernetes.io/instance"]
           value: RELEASE-NAME
