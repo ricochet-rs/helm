@@ -23,4 +23,4 @@ steps:
   unittest:
     image: reg.ricochet.rs/docker.io/helmunittest/helm-unittest:${HELM_VERSION}-${HELM_UNITTEST_VERSION}
     commands:
-      - helm unittest --strict -f 'unittests/**/*.yaml' ./charts/*
+      - helm unittest --strict -f 'tests/**/*_test.yaml' ./charts/*

@@ -34,8 +34,22 @@ Add nothing.
 
 ### Running the chart tests
 
-Run `just test`, and read a failure against `origin/main` before believing it.
-CI pins the Helm and `helm-unittest` versions in `.crow/test.yaml`, and an older pair fails suites here that pass there, so the count that matters is whether the branch adds failures rather than whether it has none.
+Run `just test`, and expect every suite to pass.
+The `-f` glob in `.crow/test.yaml` has to keep matching `charts/*/tests`, because `helm unittest` reports success on a glob that matches nothing and a pipeline that runs no test is indistinguishable from one that passes.
+Reproduce a disagreement with CI under its own pinned pair rather than guessing at a version difference:
+
+```sh
+# the image tag is HELM_VERSION-HELM_UNITTEST_VERSION from .crow/test.yaml
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/w -w /w \
+  helmunittest/helm-unittest:3.19.0-1.0.3 --strict -f 'tests/**/*_test.yaml' ./charts/*
+```
+
+### Asserting a rendered name
+
+Expect `ricochet`, never `RELEASE-NAME-ricochet`.
+`values.yaml` sets `fullnameOverride`, so `ricochet.fullname` ignores the release name entirely.
+The `app.kubernetes.io/name` label is the chart name, `ricochet-helm`, rather than the override.
+Match `helm.sh/chart` with a pattern, since the release bot bumps the version it carries.
 
 ### Cluster-scoped permissions
 

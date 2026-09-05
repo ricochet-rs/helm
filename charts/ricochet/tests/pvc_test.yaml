@@ -14,7 +14,7 @@ tests:
           of: PersistentVolumeClaim
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-ricochet-home
+          value: ricochet-home
       - equal:
           path: spec.resources.requests.storage
           value: 25Gi
