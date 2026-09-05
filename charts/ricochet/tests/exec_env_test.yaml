@@ -38,7 +38,7 @@ tests:
         template: configmap-exec-env.yaml
       - equal:
           path: metadata.name
-          value: RELEASE-NAME-ricochet-exec-env
+          value: ricochet-exec-env
         template: configmap-exec-env.yaml
       - matchRegex:
           path: data["ricochet-exec-env.toml"]
@@ -111,7 +111,7 @@ tests:
         template: configmap-exec-env.yaml
       - equal:
           path: metadata.labels["app.kubernetes.io/name"]
-          value: ricochet
+          value: ricochet-helm
         template: configmap-exec-env.yaml
       - equal:
           path: metadata.labels["app.kubernetes.io/instance"]
@@ -131,7 +131,7 @@ tests:
           content:
             name: exec-env-config
             configMap:
-              name: RELEASE-NAME-ricochet-exec-env
+              name: ricochet-exec-env
         template: deployment.yaml
 
   # Test 7: Volume is not created when execEnv.config is empty
@@ -259,14 +259,14 @@ tests:
           content:
             name: home-storage
             persistentVolumeClaim:
-              claimName: RELEASE-NAME-ricochet-home
+              claimName: ricochet-home
         template: deployment.yaml
       - contains:
           path: spec.template.spec.volumes
           content:
             name: exec-env-config
             configMap:
-              name: RELEASE-NAME-ricochet-exec-env
+              name: ricochet-exec-env
         template: deployment.yaml
 
   # Test 13: ConfigMap content is exactly as provided (verbatim)
