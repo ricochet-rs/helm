@@ -1,0 +1,43 @@
+suite: clusterrole
+templates:
+  - clusterrole.yaml
+tests:
+  - it: should not create a ClusterRole by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not create a ClusterRole when rbac.create is disabled
+    set:
+      rbac.create: false
+      rbac.clusterRole.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should read node architectures when enabled
+    set:
+      rbac.clusterRole.enabled: true
+    asserts:
+      - isKind:
+          of: ClusterRole
+      - equal:
+          path: metadata.name
+          value: ricochet
+      - contains:
+          path: rules
+          content:
+            apiGroups: ['']
+            resources: ['nodes']
+            verbs: ['get', 'list']
+
+  - it: should read the priority classes named by the backend when enabled
+    set:
+      rbac.clusterRole.enabled: true
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ['scheduling.k8s.io']
+            resources: ['priorityclasses']
+            verbs: ['get']
