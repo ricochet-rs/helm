@@ -32,6 +32,15 @@ tests:
             resources: ['events']
             verbs: ['list']
 
+  - it: should read pod metrics so workers report memory and CPU
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ['metrics.k8s.io']
+            resources: ['pods']
+            verbs: ['get', 'list']
+
   - it: should replace the defaults entirely when rules are given
     set:
       rbac.rules:
