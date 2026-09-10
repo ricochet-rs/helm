@@ -30,6 +30,10 @@ rules:
   - apiGroups: [""]
     resources: ["endpoints"]
     verbs: ["get", "list"]
+  # Metrics Server backs the memory and CPU readings of each worker and task run.
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["get", "list"]
   # A Job whose pods are rejected at admission reports neither success nor
   # failure, so its events are the only account of why nothing was created
   - apiGroups: [""]
