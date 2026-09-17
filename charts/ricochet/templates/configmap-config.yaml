@@ -38,8 +38,8 @@ data:
     # Backend configuration
     [backend]
     engine = "k8s"
-    {{- if not (hasKey (default dict .Values.config.backend) "leader_election") }}
-    leader_election = {{ gt (int .Values.replicaCount) 1 | ternary "lease" "sole" | quote }}
+    {{- if and (gt (int .Values.replicaCount) 1) (not (hasKey (default dict .Values.config.backend) "leader_election")) }}
+    leader_election = "lease"
     {{- end }}
     {{- if .Values.config.backend }}
     {{- range $key, $value := .Values.config.backend }}

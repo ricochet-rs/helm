@@ -56,3 +56,7 @@ Match `helm.sh/chart` with a pattern, since the release bot bumps the version it
 Name cluster-wide RBAC resources with `ricochet.clusterRoleName` so releases with the same `fullnameOverride` cannot share ownership.
 Put a cluster-scoped rule in `templates/clusterrole.yaml`, which is gated behind `rbac.clusterRole.enabled` and off by default.
 Ricochet treats a forbidden read as a missing object, so a feature that depends on one degrades silently rather than reporting the permission it lacks: say so in the values comment, since the operator is the one who has to turn it on.
+
+### Leader election
+
+Omit the derived `backend.leader_election` setting for a single replica; Ricochet uses sole leadership by default and only accepts `lease` as an explicit mode.
