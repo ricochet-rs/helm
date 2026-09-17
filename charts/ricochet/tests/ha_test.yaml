@@ -40,13 +40,13 @@ tests:
             verbs: ['get', 'create', 'patch']
         template: role.yaml
 
-  - it: uses sole election for one replica with generated config
+  - it: omits election mode for one replica so the server uses its default
     set:
       config.server.port: 6188
     asserts:
-      - matchRegex:
+      - notMatchRegex:
           path: data["ricochet-config.toml"]
-          pattern: 'leader_election = "sole"'
+          pattern: 'leader_election'
         template: configmap-config.yaml
       - notContains:
           path: rules
@@ -59,11 +59,11 @@ tests:
   - it: preserves an explicit election mode without duplicate keys
     set:
       replicaCount: 2
-      config.backend.leader_election: sole
+      config.backend.leader_election: lease
     asserts:
       - matchRegex:
           path: data["ricochet-config.toml"]
-          pattern: 'leader_election = "sole"'
+          pattern: 'leader_election = "lease"'
         template: configmap-config.yaml
       - notMatchRegex:
           path: data["ricochet-config.toml"]
