@@ -40,4 +40,9 @@ rules:
     resources: ["events"]
     verbs: ["list"]
   {{- end }}
+  {{- if gt (int .Values.replicaCount) 1 }}
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "patch"]
+  {{- end }}
 {{- end }}

@@ -7,12 +7,16 @@ nameOverride: ''
 # clusterDomain -- Kubernetes cluster domain
 clusterDomain: cluster.local
 
-# replicaCount -- Number of replicas to deploy
+# replicaCount -- Number of replicas to deploy. More than one enables Lease leader election and grants Lease permissions.
+# HA requires Ricochet 0.22.0 or later, PostgreSQL, and shared storage.
+# config.backend.leader_election overrides the derived mode.
+# With config.raw or existingConfigMap, configure leader_election = "lease" yourself.
+# With rbac.create=false, grant get, create, and patch on coordination.k8s.io leases yourself.
 replicaCount: 1
 
 # strategy -- Deployment strategy configuration
 strategy:
-  # strategy.type -- Deployment strategy type (RollingUpdate or Recreate)
+  # strategy.type -- Deployment strategy type (RollingUpdate or Recreate). Use Recreate when switching between one and multiple replicas to prevent sole and lease leaders from overlapping.
   type: Recreate
   rollingUpdate:
     # strategy.rollingUpdate.maxSurge -- Maximum number of pods that can be created over the desired number of pods
@@ -312,7 +316,7 @@ serviceAccount:
 rbac:
   # rbac.create -- Create RBAC resources (required for launcher to spawn pods)
   create: true
-  # rbac.rules -- Custom RBAC rules (leave empty to use default launcher permissions)
+  # rbac.rules -- Custom RBAC rules (leave empty to use default launcher permissions). Lease permissions are always appended when replicaCount is greater than one.
   rules: []
   # rbac.clusterRole -- Cluster-scoped RBAC for multi-arch support and priority class checks
   clusterRole:

@@ -19,8 +19,8 @@ spec:
   template:
     metadata:
       annotations:
-        {{- if ne (len .Values.config) 0 }}
-        checksum/config: {{ printf "%s-%s-%s-%s-%s" (toYaml .Values.config | sha256sum) (toYaml .Values.apps.deployment.persistence | sha256sum) (toYaml .Values.apps.deployment.imagePullPolicy | sha256sum) (toYaml .Values.apps.deployment.imagePullSecrets | sha256sum) (toYaml .Values.execEnv | sha256sum) }}
+        {{- if or (ne (len .Values.config) 0) (gt (int .Values.replicaCount) 1) }}
+        checksum/config: {{ printf "%s-%s-%s-%s-%s" (toYaml (dict "config" .Values.config "ha" (gt (int .Values.replicaCount) 1)) | sha256sum) (toYaml .Values.apps.deployment.persistence | sha256sum) (toYaml .Values.apps.deployment.imagePullPolicy | sha256sum) (toYaml .Values.apps.deployment.imagePullSecrets | sha256sum) (toYaml .Values.execEnv | sha256sum) }}
         {{- end }}
         {{- if .Values.config.secrets }}
         checksum/secret-config: {{ toYaml .Values.config.secrets | sha256sum }}
@@ -43,7 +43,7 @@ spec:
       securityContext:
         {{- include "ricochet.podSecurityContext" . | nindent 8 }}
       {{- end }}
-      {{- if or .Values.initContainers .Values.persistence.home.enabled (ne (len .Values.config) 0) .Values.telemetry.jaeger.enabled }}
+      {{- if or .Values.initContainers .Values.persistence.home.enabled (or (ne (len .Values.config) 0) (gt (int .Values.replicaCount) 1)) .Values.telemetry.jaeger.enabled }}
       initContainers:
         {{- if and .Values.persistence.home.enabled (eq (include "ricochet.fixPermissions.enabled" .) "true") }}
         - name: fix-permissions-root
@@ -117,7 +117,7 @@ spec:
               mountPath: {{ .Values.persistence.home.mountPath }}
             {{- end }}
         {{- end }}
-        {{- if ne (len .Values.config) 0 }}
+        {{- if or (ne (len .Values.config) 0) (gt (int .Values.replicaCount) 1) }}
         - name: merge-config
           image: {{ include "ricochet.initContainerImage" . }}
           command: ['sh', '-c']
@@ -184,7 +184,7 @@ spec:
                 - ALL
             runAsNonRoot: true
           volumeMounts:
-            {{- if ne (len .Values.config) 0 }}
+            {{- if or (ne (len .Values.config) 0) (gt (int .Values.replicaCount) 1) }}
             - name: config
               mountPath: /config
             {{- end }}
@@ -269,8 +269,12 @@ spec:
             - name: http
               containerPort: {{ .Values.service.targetPort }}
               protocol: {{ .Values.service.protocol }}
-          {{- with .Values.env }}
           env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          {{- with .Values.env }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.envFrom }}
@@ -291,7 +295,7 @@ spec:
             {{- if .Values.persistence.home.enabled }}
             - name: home-storage
               mountPath: {{ .Values.persistence.home.mountPath }}
-            {{- else if ne (len .Values.config) 0 }}
+            {{- else if or (ne (len .Values.config) 0) (gt (int .Values.replicaCount) 1) }}
             - name: config-merged
               mountPath: /var/lib/ricochet/data
             {{- end }}
@@ -342,7 +346,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.home.existingClaim | default (printf "%s-home" (include "ricochet.fullname" .)) }}
         {{- end }}
-        {{- if ne (len .Values.config) 0 }}
+        {{- if or (ne (len .Values.config) 0) (gt (int .Values.replicaCount) 1) }}
         - name: config
           configMap:
             name: {{ .Values.existingConfigMap | default (printf "%s-config" (include "ricochet.fullname" .)) }}
@@ -366,7 +370,7 @@ spec:
             secretName: {{ $secretName }}
         {{- end }}
         {{- end }}
-        {{- if and (ne (len .Values.config) 0) (not .Values.persistence.home.enabled) }}
+        {{- if and (or (ne (len .Values.config) 0) (gt (int .Values.replicaCount) 1)) (not .Values.persistence.home.enabled) }}
         - name: config-merged
           emptyDir: {}
         {{- end }}
