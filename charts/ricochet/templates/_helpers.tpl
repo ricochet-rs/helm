@@ -24,6 +24,14 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 
 {{/*
+Cluster-wide RBAC names must distinguish releases even when fullnameOverride is shared.
+Namespaces cannot contain dots, so a dot separates namespace and release without ambiguous hyphens or truncation.
+*/}}
+{{- define "ricochet.clusterRoleName" -}}
+{{- printf "%s.%s" .Release.Namespace .Release.Name -}}
+{{- end }}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "ricochet.chart" -}}

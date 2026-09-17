@@ -46,12 +46,13 @@ docker run --rm --user "$(id -u):$(id -g)" -v "$PWD":/w -w /w \
 
 ### Asserting a rendered name
 
-Expect `ricochet`, never `RELEASE-NAME-ricochet`.
+Expect `ricochet` for namespaced resources, never `RELEASE-NAME-ricochet`.
 `values.yaml` sets `fullnameOverride`, so `ricochet.fullname` ignores the release name entirely.
 The `app.kubernetes.io/name` label is the chart name, `ricochet-helm`, rather than the override.
 Match `helm.sh/chart` with a pattern, since the release bot bumps the version it carries.
 
 ### Cluster-scoped permissions
 
+Name cluster-wide RBAC resources with `ricochet.clusterRoleName` so releases with the same `fullnameOverride` cannot share ownership.
 Put a cluster-scoped rule in `templates/clusterrole.yaml`, which is gated behind `rbac.clusterRole.enabled` and off by default.
 Ricochet treats a forbidden read as a missing object, so a feature that depends on one degrades silently rather than reporting the permission it lacks: say so in the values comment, since the operator is the one who has to turn it on.
