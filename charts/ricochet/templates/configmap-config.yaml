@@ -1,4 +1,4 @@
-{{- if or (ne (len .Values.config) 0) .Values.existingConfigMap -}}
+{{- if or (ne (len .Values.config) 0) (gt (int .Values.replicaCount) 1) .Values.existingConfigMap -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -35,10 +35,12 @@ data:
     {{- end }}
     {{- end }}
 
-    {{- if or .Values.config.backend .Values.apps.deployment.persistence.content.enabled .Values.apps.deployment.persistence.cache.enabled .Values.apps.deployment.imagePullPolicy .Values.apps.deployment.imagePullSecrets .Values.apps.deployment.strategy }}
     # Backend configuration
     [backend]
     engine = "k8s"
+    {{- if not (hasKey (default dict .Values.config.backend) "leader_election") }}
+    leader_election = {{ gt (int .Values.replicaCount) 1 | ternary "lease" "sole" | quote }}
+    {{- end }}
     {{- if .Values.config.backend }}
     {{- range $key, $value := .Values.config.backend }}
     {{- if eq (kindOf $value) "string" }}
@@ -76,7 +78,6 @@ data:
     {{- end }}
     {{- if .Values.apps.deployment.persistence.cache.enabled }}
     pvc_cache_name = {{ .Values.apps.deployment.persistence.cache.existingClaim | default (printf "%s-apps-cache" (include "ricochet.fullname" .)) | quote }}
-    {{- end }}
     {{- end }}
 
     {{- if and .Values.telemetry.jaeger.enabled (not (index .Values.config "otel")) }}

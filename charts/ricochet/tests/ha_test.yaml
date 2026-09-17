@@ -1,0 +1,134 @@
+suite: high availability
+templates:
+  - configmap-config.yaml
+  - deployment.yaml
+  - role.yaml
+tests:
+  - it: enables lease election with empty config and multiple replicas
+    set:
+      replicaCount: 2
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'leader_election = "lease"'
+        template: configmap-config.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config
+            configMap:
+              name: ricochet-config
+        template: deployment.yaml
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: merge-config
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: config-merged
+            mountPath: /var/lib/ricochet/data
+        template: deployment.yaml
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+        template: deployment.yaml
+      - contains:
+          path: rules
+          content:
+            apiGroups: ['coordination.k8s.io']
+            resources: ['leases']
+            verbs: ['get', 'create', 'patch']
+        template: role.yaml
+
+  - it: uses sole election for one replica with generated config
+    set:
+      config.server.port: 6188
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'leader_election = "sole"'
+        template: configmap-config.yaml
+      - notContains:
+          path: rules
+          content:
+            apiGroups: ['coordination.k8s.io']
+            resources: ['leases']
+            verbs: ['get', 'create', 'patch']
+        template: role.yaml
+
+  - it: preserves an explicit election mode without duplicate keys
+    set:
+      replicaCount: 2
+      config.backend.leader_election: sole
+    asserts:
+      - matchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: 'leader_election = "sole"'
+        template: configmap-config.yaml
+      - notMatchRegex:
+          path: data["ricochet-config.toml"]
+          pattern: '(?s)leader_election.*leader_election'
+        template: configmap-config.yaml
+
+  - it: preserves raw config
+    set:
+      replicaCount: 2
+      config.raw: |
+        [backend]
+        leader_election = "lease"
+    asserts:
+      - equal:
+          path: data["ricochet-config.toml"]
+          value: |
+            [backend]
+            leader_election = "lease"
+        template: configmap-config.yaml
+
+  - it: appends lease permissions to custom rules
+    set:
+      replicaCount: 2
+      rbac.rules:
+        - apiGroups: ['']
+          resources: ['pods']
+          verbs: ['get']
+    asserts:
+      - equal:
+          path: rules
+          value:
+            - apiGroups: ['']
+              resources: ['pods']
+              verbs: ['get']
+            - apiGroups: ['coordination.k8s.io']
+              resources: ['leases']
+              verbs: ['get', 'create', 'patch']
+        template: role.yaml
+
+  - it: respects externally managed RBAC
+    set:
+      replicaCount: 2
+      rbac.create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: role.yaml
+
+  - it: exposes pod identity and preserves extra environment variables
+    set:
+      env:
+        - name: EXAMPLE
+          value: example
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        template: deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXAMPLE
+            value: example
+        template: deployment.yaml
