@@ -1,4 +1,7 @@
 suite: clusterrole
+release:
+  name: ricochet
+  namespace: ricochet
 templates:
   - clusterrole.yaml
 tests:
@@ -23,7 +26,7 @@ tests:
           of: ClusterRole
       - equal:
           path: metadata.name
-          value: ricochet
+          value: ricochet.ricochet
       - contains:
           path: rules
           content:
@@ -41,3 +44,26 @@ tests:
             apiGroups: ['scheduling.k8s.io']
             resources: ['priorityclasses']
             verbs: ['get']
+
+  - it: should distinguish the same release in another namespace
+    release:
+      name: ricochet
+      namespace: ricochet-josi
+    set:
+      rbac.clusterRole.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: ricochet-josi.ricochet
+
+  - it: should distinguish releases despite a shared fullnameOverride
+    release:
+      name: second
+      namespace: ricochet
+    set:
+      rbac.clusterRole.enabled: true
+      fullnameOverride: ricochet
+    asserts:
+      - equal:
+          path: metadata.name
+          value: ricochet.second

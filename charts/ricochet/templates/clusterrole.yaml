@@ -2,7 +2,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "ricochet.fullname" . }}
+  name: {{ include "ricochet.clusterRoleName" . }}
   labels:
     {{- include "ricochet.labels" . | nindent 4 }}
 rules:

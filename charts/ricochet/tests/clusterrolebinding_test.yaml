@@ -1,0 +1,67 @@
+suite: clusterrolebinding
+templates:
+  - clusterrolebinding.yaml
+release:
+  name: ricochet-josi
+  namespace: ricochet-josi
+tests:
+  - it: should not create a binding by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not create a binding when RBAC is disabled
+    set:
+      rbac.create: false
+      rbac.clusterRole.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should bind the installation role to its namespaced service account
+    set:
+      rbac.clusterRole.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: ricochet-josi.ricochet-josi
+      - equal:
+          path: roleRef
+          value:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: ricochet-josi.ricochet-josi
+      - equal:
+          path: subjects
+          value:
+            - kind: ServiceAccount
+              name: ricochet
+              namespace: ricochet-josi
+
+  - it: should respect an existing service account without changing the role name
+    set:
+      rbac.clusterRole.enabled: true
+      serviceAccount.create: false
+      serviceAccount.name: existing-account
+      fullnameOverride: custom
+    asserts:
+      - equal:
+          path: roleRef.name
+          value: ricochet-josi.ricochet-josi
+      - equal:
+          path: subjects[0].name
+          value: existing-account
+
+  - it: should retain long namespace and release names without truncation collisions
+    release:
+      name: second-ricochet-installation-with-a-long-release-name
+      namespace: second-ricochet-installation-with-a-long-namespace
+    set:
+      rbac.clusterRole.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: second-ricochet-installation-with-a-long-namespace.second-ricochet-installation-with-a-long-release-name
+      - equal:
+          path: roleRef.name
+          value: second-ricochet-installation-with-a-long-namespace.second-ricochet-installation-with-a-long-release-name
