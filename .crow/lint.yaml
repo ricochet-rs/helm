@@ -33,7 +33,7 @@ steps:
       - helm lint charts/*
 
   lint-yaml:
-    image: reg.ricochet.rs/docker.io/pipelinecomponents/yamllint:0.35.13
+    image: reg.ricochet.rs/docker.io/pipelinecomponents/yamllint:0.35.27
     depends_on: []
     commands:
       - yamllint .
