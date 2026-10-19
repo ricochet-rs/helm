@@ -21,7 +21,7 @@ steps:
         from_secret: ricochet_issue_token
       RICOCHET_REGISTRY_TOKEN:
         from_secret: ricochet_registry_token
-    image: reg.ricochet.rs/docker.io/alpine/helm:4.3.0
+    image: reg.ricochet.rs/docker.io/alpine/helm:4.3.1
     commands:
       # replace version in Chart.yaml
       - "sed -i 's/^version: .*/version: ${CI_COMMIT_TAG#v}/' charts/*/Chart.yaml"
@@ -41,7 +41,7 @@ steps:
       - helm push /tmp/ricochet-helm-${CI_COMMIT_TAG#v}.tgz oci://reg.ricochet.rs/ricochet
 
   changelog:
-    image: reg.ricochet.rs/docker.io/thegeeklab/git-sv:3.0.4
+    image: reg.ricochet.rs/docker.io/thegeeklab/git-sv:3.0.5
     commands:
       - apk add --no-cache -q sed
       - git sv current-version
