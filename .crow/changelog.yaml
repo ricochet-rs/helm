@@ -1,6 +1,6 @@
 clone:
   git:
-    image: codeberg.org/crow-plugins/clone:1.2.1
+    image: codeberg.org/crow-plugins/clone:1.2.2
     settings:
       tags: true
 
