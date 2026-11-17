@@ -1,6 +1,6 @@
 # ricochet-helm
 
-![Version: 1.4.4](https://img.shields.io/badge/Version-1.4.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.25.0](https://img.shields.io/badge/AppVersion-0.25.0-informational?style=flat-square)
+![Version: 1.4.5](https://img.shields.io/badge/Version-1.4.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.26.0](https://img.shields.io/badge/AppVersion-0.26.0-informational?style=flat-square)
 
 ## Installation
 
