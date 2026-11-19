@@ -97,56 +97,15 @@ Return the init container image name
 {{- end }}
 
 {{/*
-Detect whether the target cluster is OpenShift by probing for
-OpenShift-specific API groups. Relies on .Capabilities, which is populated
-during `helm install` / `helm upgrade`; `helm template` without `--validate`
-falls back to "not OpenShift" (vanilla Kubernetes).
-*/}}
-{{- define "ricochet.isOpenShift" -}}
-{{- or (.Capabilities.APIVersions.Has "security.openshift.io/v1") (.Capabilities.APIVersions.Has "route.openshift.io/v1") -}}
-{{- end }}
-
-{{/*
-Resolve persistence.home.fixPermissions.enabled with auto-detection.
-Returns the literal string "true" or "false".
-  - Explicit bool value wins.
-  - null (default) → enabled unless OpenShift is detected (SCC typically
-    blocks root init containers).
-*/}}
-{{- define "ricochet.fixPermissions.enabled" -}}
-{{- $v := .Values.persistence.home.fixPermissions.enabled -}}
-{{- if kindIs "bool" $v -}}
-{{- $v -}}
-{{- else -}}
-{{- not (eq (include "ricochet.isOpenShift" .) "true") -}}
-{{- end -}}
-{{- end }}
-
-{{/*
 Render the effective podSecurityContext. Fills in fsGroupChangePolicy
-when the user has not set it explicitly:
-  - "OnRootMismatch" when the home PVC is enabled and the
-    fix-permissions-root init container will do the recursive chown
-    (the typical vanilla Kubernetes case). Kubelet only normalizes the
-    mount root, avoiding a redundant deep walk that is very expensive
-    on slow storage backends (Azure Files NFS/SMB, large trees).
-  - "Always" otherwise. Covers OpenShift (init container auto-disabled
-    by `ricochet.fixPermissions.enabled`), explicit
-    `fixPermissions.enabled: false`, and `home.enabled: false`. Without
-    the init container, kubelet is the only mechanism that can heal
-    ownership drift.
-fsGroupChangePolicy is a no-op without fsGroup, so the auto-fill only
-triggers when fsGroup is set. To opt out of the auto-fill, set the
-policy explicitly.
+"OnRootMismatch" when fsGroup is set and the policy is not, so kubelet
+skips the recursive group walk that takes tens of minutes on slow
+storage such as Azure Files. Set the policy explicitly to override.
 */}}
 {{- define "ricochet.podSecurityContext" -}}
 {{- $psc := deepCopy (.Values.podSecurityContext | default dict) -}}
 {{- if and (hasKey $psc "fsGroup") (not (hasKey $psc "fsGroupChangePolicy")) -}}
-{{- if and .Values.persistence.home.enabled (eq (include "ricochet.fixPermissions.enabled" .) "true") -}}
 {{- $_ := set $psc "fsGroupChangePolicy" "OnRootMismatch" -}}
-{{- else -}}
-{{- $_ := set $psc "fsGroupChangePolicy" "Always" -}}
-{{- end -}}
 {{- end -}}
 {{- toYaml $psc -}}
 {{- end }}
