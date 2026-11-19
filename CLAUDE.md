@@ -26,6 +26,8 @@ A bot bumps it with `appVersion` when Ricochet releases, so a hand-written bump 
 
 Run `just docs`, never `helm-docs` alone.
 The recipe pairs it with `prettier`, which pads the table's columns, so `helm-docs` on its own rewrites all 250 rows and buries the two that changed.
+Without a local `prettier`, the recipe exits 127 after `helm-docs`; finish with `bunx prettier@<rev>` using the rev pinned in `.pre-commit-config.yaml`.
+Removing or adding the widest key re-pads every row legitimately, so review the table with `git diff -w`.
 
 ### Adding a Ricochet configuration key
 

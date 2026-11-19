@@ -45,59 +45,6 @@ spec:
       {{- end }}
       {{- if or .Values.initContainers .Values.persistence.home.enabled (or (ne (len .Values.config) 0) (gt (int .Values.replicaCount) 1)) .Values.telemetry.jaeger.enabled }}
       initContainers:
-        {{- if and .Values.persistence.home.enabled (eq (include "ricochet.fixPermissions.enabled" .) "true") }}
-        - name: fix-permissions-root
-          image: {{ include "ricochet.initContainerImage" . }}
-          command: ['sh', '-c']
-          args:
-            - |
-              {{- /* `default` treats the group 0 the images grant as empty, so dig on the key instead. */}}
-              UID="{{ dig "runAsUser" 1000 (.Values.podSecurityContext | default dict) }}"
-              GID="{{ dig "fsGroup" 1000 (.Values.podSecurityContext | default dict) }}"
-              SENTINEL=".ricochet-perms-fixed-$UID-$GID"
-
-              heal() {
-                dir="$1"
-                if [ -e "$dir/$SENTINEL" ]; then
-                  echo "[$dir] already healed for $UID:$GID, skipping recursive chown"
-                  return 0
-                fi
-                echo "[$dir] running chown -R $UID:$GID..."
-                chown -R "$UID:$GID" "$dir" || { echo "[$dir] chown failed, sentinel NOT written — will retry on next start"; return 1; }
-                touch "$dir/$SENTINEL" && chown "$UID:$GID" "$dir/$SENTINEL"
-                echo "[$dir] healed and sentinel written"
-              }
-
-              heal {{ .Values.persistence.home.mountPath }}
-              {{- if .Values.apps.deployment.persistence.content.enabled }}
-              heal {{ .Values.apps.deployment.persistence.content.mountPath }}
-              {{- end }}
-              {{- if .Values.apps.deployment.persistence.cache.enabled }}
-              heal {{ .Values.apps.deployment.persistence.cache.mountPath }}
-              {{- end }}
-          securityContext:
-            runAsUser: 0
-            runAsNonRoot: false
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-              add:
-                - CHOWN
-                - FOWNER
-                - DAC_OVERRIDE
-          volumeMounts:
-            - name: home-storage
-              mountPath: {{ .Values.persistence.home.mountPath }}
-            {{- if .Values.apps.deployment.persistence.content.enabled }}
-            - name: apps-content-storage
-              mountPath: {{ .Values.apps.deployment.persistence.content.mountPath }}
-            {{- end }}
-            {{- if .Values.apps.deployment.persistence.cache.enabled }}
-            - name: apps-cache-storage
-              mountPath: {{ .Values.apps.deployment.persistence.cache.mountPath }}
-            {{- end }}
-        {{- end }}
         {{- if .Values.persistence.home.enabled }}
         - name: fix-permissions
           image: {{ include "ricochet.initContainerImage" . }}

@@ -210,25 +210,13 @@ podAnnotations: {}
 # podLabels -- Additional labels for pods
 podLabels: {}
 
-# podSecurityContext -- Security context for pods. fsGroupChangePolicy is auto-selected by the chart based on persistence.home.fixPermissions; see inline comments in values.yaml.
+# podSecurityContext -- Security context for pods. fsGroupChangePolicy defaults to OnRootMismatch when fsGroup is set; see inline comments in values.yaml.
 podSecurityContext:
   fsGroup: 0
   # fsGroupChangePolicy controls how kubelet applies fsGroup to mounted
-  # volumes. Auto-selected by the chart based on whether the
-  # persistence.home.fixPermissions init container will run:
-  #   - "OnRootMismatch" (when fixPermissions is enabled, the default on
-  #     vanilla Kubernetes): kubelet only normalizes the mount root and
-  #     leaves the recursive chown to the init container. Avoids the
-  #     redundant deep walk that is very expensive on slow storage
-  #     backends like Azure Files NFS, where each metadata operation is
-  #     a network round-trip and a recursive chgrp over 100k+ files can
-  #     take tens of minutes.
-  #   - "Always" (when fixPermissions is disabled, e.g. on OpenShift
-  #     where SCC blocks the root init container): kubelet recursively
-  #     normalizes ownership on every mount; it is the only mechanism
-  #     that can heal ownership drift.
-  # Set explicitly to override the auto-selection (the existing kubelet
-  # default in your cluster is honored when unset).
+  # volumes. The chart fills in "OnRootMismatch" when unset: kubelet only
+  # normalizes the mount root instead of walking every file, which on
+  # Azure Files NFS takes tens of minutes for a large cache.
   # fsGroupChangePolicy: Always
   runAsNonRoot: true
   runAsUser: 1000
@@ -286,22 +274,6 @@ persistence:
     annotations: {}
     # persistence.home.existingClaim -- Use an existing PVC for home
     existingClaim: ''
-    # persistence.home.fixPermissions -- Root chown init container for the home PVC
-    # Runs a privileged init container that recursively chowns the home PVC to
-    # podSecurityContext.runAsUser:fsGroup before the main container starts.
-    # Needed because:
-    #   - Pre-1.0.0 data on the PVC may be root-owned (old chart ran `chown -R`)
-    #   - Data written before the move to GID 0 is owned 1000:1000, which the
-    #     group bit no longer covers; this is the one-release migration path
-    # fsGroupChangePolicy is auto-selected by the chart based on whether this
-    # init container will run (see the podSecurityContext comment for details).
-    # Spawned pods no longer drift: ricochet-proxy inherits its own uid/gid.
-    fixPermissions:
-      # persistence.home.fixPermissions.enabled -- Enable the root chown init container
-      # Accepts true, false, or null (auto). When null (default), enabled on
-      # vanilla Kubernetes and disabled on OpenShift (SCC blocks root init
-      # containers). Set explicitly to override detection.
-      enabled: null
 
 # serviceAccount -- Service account configuration
 serviceAccount:

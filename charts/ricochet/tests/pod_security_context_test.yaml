@@ -1,0 +1,69 @@
+suite: pod security context
+templates:
+  - deployment.yaml
+tests:
+  - it: runs no root init container on the home PVC
+    set:
+      persistence:
+        home:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: fix-permissions
+      - notContains:
+          path: spec.template.spec.initContainers
+          content:
+            name: fix-permissions-root
+          any: true
+
+  - it: defaults fsGroupChangePolicy to OnRootMismatch with the home PVC
+    set:
+      persistence:
+        home:
+          enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: OnRootMismatch
+
+  - it: defaults fsGroupChangePolicy to OnRootMismatch without the home PVC
+    set:
+      persistence:
+        home:
+          enabled: false
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: OnRootMismatch
+
+  - it: defaults fsGroupChangePolicy to OnRootMismatch on OpenShift
+    set:
+      persistence:
+        home:
+          enabled: true
+    capabilities:
+      apiVersions:
+        - security.openshift.io/v1
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: OnRootMismatch
+
+  - it: honors an explicit fsGroupChangePolicy
+    set:
+      podSecurityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
+          value: Always
+
+  - it: skips the fsGroupChangePolicy default when fsGroup is unset
+    set:
+      podSecurityContext:
+        fsGroup: null
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext.fsGroupChangePolicy
